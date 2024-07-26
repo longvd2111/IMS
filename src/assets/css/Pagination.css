@@ -1,0 +1,26 @@
+.pagination{
+    display: flex;
+    justify-content: flex-end;
+margin: 1rem 3rem 0rem 0rem;
+}
+.pagination p{
+    margin-right: 5px;
+}
+.pagination a {
+    color: black;
+   
+    padding: 5px 8px ;
+    text-decoration: none;
+   
+  }
+ 
+  
+  .pagination-disabled[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.5; 
+}
+
+ 
+
+ 
