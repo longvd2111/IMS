@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/:path*",  
-      "destination": "http://ims-pjb03.ddns.net:8080/api/:path*"  
-    }
-  ]
-}
