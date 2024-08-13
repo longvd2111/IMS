@@ -8,9 +8,12 @@ import {
   FaCheckCircle,
   FaUserCircle,
 } from "react-icons/fa";
+import { Link, useLocation } from "react-router-dom";
 import "~/assets/css/Navbar.css";
 
-const Sidebar = ({ isExpanded, handleMouseEnter, handleMouseLeave }) => {
+const Sidebar = ({ isExpanded, handleMouseEnter, handleMouseLeave, role }) => {
+  const location = useLocation();
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -26,30 +29,66 @@ const Sidebar = ({ isExpanded, handleMouseEnter, handleMouseLeave }) => {
         </Col>
       </Row>
       <Nav className="flex-column">
-        <Nav.Link href="/" className="nav-link">
+        <Link
+          to="/"
+          className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+        >
           <FaHome size={24} className="nav-icon" />
           <span className="nav-label">Home</span>
-        </Nav.Link>
-        <Nav.Link href="/candidate" className="nav-link">
+        </Link>
+        <Link
+          to="/candidate"
+          className={`nav-link ${
+            location.pathname.startsWith("/candidate") ? "active" : ""
+          }`}
+        >
           <FaUser size={24} className="nav-icon" />
           <span className="nav-label">Candidate</span>
-        </Nav.Link>
-        <Nav.Link href="/job" className="nav-link">
+        </Link>
+        <Link
+          to="/job"
+          className={`nav-link ${
+            location.pathname.startsWith("/job") ? "active" : ""
+          }`}
+        >
           <FaBriefcase size={24} className="nav-icon" />
           <span className="nav-label">Job</span>
-        </Nav.Link>
-        <Nav.Link href="/interview" className="nav-link">
+        </Link>
+        <Link
+          to="/interview"
+          className={`nav-link ${
+            location.pathname.startsWith("/interview") ? "active" : ""
+          }`}
+        >
           <FaFileAlt size={24} className="nav-icon" />
           <span className="nav-label">Interview</span>
-        </Nav.Link>
-        <Nav.Link href="/offer" className="nav-link">
-          <FaCheckCircle size={24} className="nav-icon" />
-          <span className="nav-label">Offer</span>
-        </Nav.Link>
-        <Nav.Link href="/user" className="nav-link">
-          <FaUserCircle size={24} className="nav-icon" />
-          <span className="nav-label">User</span>
-        </Nav.Link>
+        </Link>
+        {role !== "ROLE_INTERVIEWER" && (
+          <>
+            <Link
+              to="/offer"
+              className={`nav-link ${
+                location.pathname.startsWith("/offer") ? "active" : ""
+              }`}
+            >
+              <FaCheckCircle size={24} className="nav-icon" />
+              <span className="nav-label">Offer</span>
+            </Link>
+          </>
+        )}
+        {role === "ROLE_ADMIN" && (
+          <>
+            <Link
+              to="/user"
+              className={`nav-link ${
+                location.pathname.startsWith("/user") ? "active" : ""
+              }`}
+            >
+              <FaUserCircle size={24} className="nav-icon" />
+              <span className="nav-label">User</span>
+            </Link>
+          </>
+        )}
       </Nav>
     </div>
   );

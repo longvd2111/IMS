@@ -8,7 +8,7 @@ const SearchUser = ({ onSearch }) => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    onSearch(searchName, searchRole);
+    onSearch(searchName.trim(), searchRole);
   };
 
   return (

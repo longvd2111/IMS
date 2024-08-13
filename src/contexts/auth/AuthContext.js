@@ -1,4 +1,3 @@
-import { escape } from "lodash";
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "react-toastify";
 
@@ -53,7 +52,6 @@ export const AuthProvider = ({ children }) => {
     });
     setToken(token);
     setRemember(isRemember);
-    console.log(user);
     if (user?.status === "Active") {
       if (remember) {
         localStorage.setItem("user", JSON.stringify(user));

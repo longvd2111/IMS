@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 // Import CSS file
 import { FaSearch } from "react-icons/fa";
 import { InterviewStatus, userRole } from "../../data/Constants";
 import { fetchAllUser } from "~/services/userServices";
-import _ from "lodash";
-import { fetchInterview } from "~/services/interviewServices";
+import _, { debounce } from "lodash";
 
 // const ROLE_RECRUITER = userRole.find((role) => role.value === "ROLE_RECRUITER");
 
@@ -14,11 +13,8 @@ const SearchInterview = ({ onSearch }) => {
   const [selectedRecruiter, setSelectedRecruiter] = useState("");
   const [listRecruiters, setListRecruiters] = useState("");
 
-  const handleSearch = () => {
-    // console.log(searchText);
-    // console.log(selectedStatus);
-    // console.log(selectedRecruiter);
-    onSearch(searchText, selectedStatus, selectedRecruiter);
+  const debouncedSearch = () => {
+    onSearch(searchText.trim(), selectedStatus, selectedRecruiter);
   };
 
   useEffect(() => {
@@ -51,12 +47,20 @@ const SearchInterview = ({ onSearch }) => {
     fetchData(); // Call the fetch data function
   }, []);
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
+  // Hàm debounce cho handleKeyPress
+  const debouncedHandleKeyPress = useCallback(
+    debounce((e) => {
+      if (e.key === "Enter") {
+        debouncedSearch();
+      }
+    }, 300),
+    [debouncedSearch]
+  );
 
+  const handleKeyPress = (e) => {
+    // Gọi hàm debounce cho handleKeyPress
+    debouncedHandleKeyPress(e);
+  };
   return (
     <div className="search-container">
       <label>
@@ -78,7 +82,7 @@ const SearchInterview = ({ onSearch }) => {
           <option value={""}>Show all Recruiter</option>
           {listRecruiters &&
             listRecruiters.length >= 0 &&
-            listRecruiters.map((item, index) => {
+            listRecruiters?.map((item, index) => {
               return (
                 <option key={index} value={item.fullName}>
                   {item?.fullName}
@@ -103,7 +107,13 @@ const SearchInterview = ({ onSearch }) => {
         </select>
       </label>
 
-      <button onClick={() => handleSearch()}>Search</button>
+      <button
+        type="button"
+        className="button-form"
+        onClick={() => debouncedSearch()}
+      >
+        Search
+      </button>
     </div>
   );
 };

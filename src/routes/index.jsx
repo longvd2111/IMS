@@ -8,6 +8,7 @@ import LoginLayOut from "~/layouts/LoginLayout";
 import Login from "~/components/auth/Login";
 import EditInterview from "~/pages/interviews/EditInterview";
 import ForgotPassword from "~/components/auth/ForgotPassword";
+import SubmitInterview from "~/pages/interviews/SubmitInterview";
 const Home = React.lazy(() => import("~/components/common/Home"));
 
 // Interview
@@ -95,6 +96,10 @@ const router = createBrowserRouter([
       {
         path: "edit/:id",
         element: <EditInterview />,
+      },
+      {
+        path: "submit/:id",
+        element: <SubmitInterview />,
       },
     ],
   },

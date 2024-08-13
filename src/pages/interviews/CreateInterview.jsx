@@ -1,23 +1,40 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Container, Row, Col, Form } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Row, Col, Form, Modal } from "react-bootstrap";
 import Select from "react-select";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaAngleRight } from "react-icons/fa";
 import "../../assets/css/interview-css/Interview.css";
 import { fetchAllUser } from "~/services/userServices";
-import { userRole } from "~/data/Constants";
+import { optionsSkills, userRole } from "~/data/Constants";
 import _ from "lodash";
 import { fetchAllJobs } from "~/services/jobApi";
-import { fetchAllCandidate } from "~/services/candidateApi";
+import {
+  fetchAllCandidate,
+  fetchCandidateById,
+  updateCandidate,
+} from "~/services/candidateApi";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { AuthContext, useAuth } from "~/contexts/auth/AuthContext";
+import { postInterview } from "~/services/interviewServices";
+import { toast } from "react-toastify";
+import {
+  convertDobArrayToISO,
+  convertToDateTimeSQL6,
+  getSkillIds,
+} from "~/utils/Validate";
+import "../../assets/css/candidate-css/CandidateDetail.css";
 
 const CreateInterview = () => {
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
   const [optionInterviews, setOptionInterviews] = useState([]);
   const [optionRecruiters, setOptionRecruiters] = useState([]);
   const [optionJobs, setOptionJobs] = useState([]);
   const [optionCandidates, setOptionCandidates] = useState([]);
+  const [formdataCandidate, setFormdataCandidate] = useState(null);
 
   useEffect(() => {
     getInterviewer(0, 1000);
@@ -30,15 +47,20 @@ const CreateInterview = () => {
     let res = await fetchAllCandidate();
     if (res && res.data) {
       const clonedListCandidates = res.data;
+
+      // Lọc chỉ những candidate có status là OPEN
+      const filteredCandidates = clonedListCandidates.filter(
+        (item) => item.candidateStatus === "OPEN"
+      );
+
       setOptionCandidates(
-        clonedListCandidates.map((item) => ({
+        filteredCandidates.map((item) => ({
           value: item.id,
           label: item.fullName,
         }))
       );
     }
   };
-
   const getInterviewer = async (index, pageSize) => {
     let res = await fetchAllUser(index, pageSize);
     const ROLE_INTERVIEWER = userRole.find(
@@ -80,8 +102,9 @@ const CreateInterview = () => {
   const getJob = async (index, pageSize) => {
     let res = await fetchAllJobs(index, pageSize);
     if (res && res.data) {
+      const openJobs = res.data.filter((job) => job.jobStatus === "OPEN");
       setOptionJobs(
-        res.data.map((job) => ({
+        openJobs.map((job) => ({
           value: job.id,
           label: job.jobTitle,
         }))
@@ -94,26 +117,28 @@ const CreateInterview = () => {
   const formik = useFormik({
     initialValues: {
       title: "",
-      candidateId: 0,
+      candidateId: "",
       scheduleDate: "",
       scheduleTimeFrom: "",
       scheduleTimeTo: "",
       note: "",
-      jobId: 0,
+      position: "NOT_AVAILABLE",
       interviewerSet: [],
       location: "",
-      recruiterId: 0,
+      recruiterId: "",
       meetingId: "",
-      interviewResult: "FAIL",
-      interviewStatus: "CANCELLED",
+      interviewResult: "NAN",
+      interviewStatus: "OPEN",
+      jobId: "",
     },
     validationSchema: Yup.object({
       title: Yup.string().required("You must fill in this section!"),
-      candidateId: Yup.string().required("You must select an option!"),
-      jobId: Yup.string().required("You must select an option!"),
-      interviewerSet: Yup.array().required(
-        "You must select at least an option!"
-      ),
+      candidateId: Yup.number().required("You must select an option!"),
+      interviewerSet: Yup.array()
+        .required("You must select at least an option!")
+        .min(1),
+      recruiterId: Yup.string().required("You must select an recruiter"),
+      jobId: Yup.string().required("You must select a job"),
       scheduleDate: Yup.date()
         .min(new Date(), "Schedule must be today or in the future")
         .required("Schedule date is required!"),
@@ -132,14 +157,77 @@ const CreateInterview = () => {
             return value > scheduleTimeFrom;
           }
         ),
+      note: Yup.string().max(500, "Note cannot be more than 500 characters"),
+      meetingId: Yup.string().matches(
+        /^[a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{3}$/,
+        "Meeting Id must be in the format xxx-xxxx-xxx with letters or digits"
+      ),
     }),
-    onSubmit: (values) => {
-      console.log(values);
+    onSubmit: async (values) => {
+      const candidateRes = await fetchCandidateById(values?.candidateId);
+
+      // value interview
+      const {
+        scheduleTimeFrom,
+        scheduleTimeTo,
+        scheduleDate,
+        ...valuesWithoutDate
+      } = values;
+      const scheduleTimeFromFinal = convertToDateTimeSQL6(
+        scheduleDate,
+        scheduleTimeFrom
+      );
+      const scheduleTimeToFinal = convertToDateTimeSQL6(
+        scheduleDate,
+        scheduleTimeTo
+      );
+
+      const {
+        skills,
+        recruiter,
+        candidateStatus,
+        ...formdataCandidateWithOutSkill
+      } = candidateRes;
+
+      setFormdataCandidate(candidateRes);
+
+      const skillIds = getSkillIds(skills, optionsSkills);
+
+      //form candidate
+      const dataSubmitCandidate = {
+        candidateStatus: "WAITING_FOR_INTERVIEW",
+        recruiterId: values.recruiterId,
+        dob: formdataCandidate?.dob
+          ? convertDobArrayToISO(formdataCandidate.dob)
+          : "",
+        skillIds: skillIds,
+        ...formdataCandidateWithOutSkill,
+      };
+
+      //form interviewSchedule
+      const finalValues = {
+        ...valuesWithoutDate,
+        scheduleTimeFrom: scheduleTimeFromFinal,
+        scheduleTimeTo: scheduleTimeToFinal,
+        position: candidateRes?.candidatePosition,
+      };
+
+      const [resCan, resInterview] = await Promise.all([
+        updateCandidate(dataSubmitCandidate),
+        postInterview(finalValues),
+      ]);
+
+      if (resInterview && resCan) {
+        toast.success(resInterview);
+        navigate("/interview");
+      } else {
+        toast.error("Failed to created interview schedule!");
+      }
     },
   });
 
   return (
-    <Container className="mb-3 edit-interview-container">
+    <div>
       <div className="breadcrumb__group">
         <span
           className="breadcrumb-link"
@@ -151,286 +239,344 @@ const CreateInterview = () => {
         <span className="breadcrumb-link__active">New Interview Schedule</span>
       </div>
 
-      {/* <div className="interview-page_link">
-        <Link
-          className="button-form button-form--danger"
-          to={`/interview/create`}
-        >
-          Cancel Candidate
-        </Link>
-      </div> */}
-
-      <div className="content-interview-form">
+      <div className="candidate-detail">
         <Form onSubmit={formik.handleSubmit}>
-          <Row>
-            {/* Interview Information */}
+          <div className="section">
+            <div className="section-personal-info">
+              {/* Interview Information */}
 
-            {/* Schedule Title */}
-            <Row className="mb-3">
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Schedule Title<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="text"
-                      placeholder="Type a title..."
-                      {...formik.getFieldProps("title")}
-                    />
+              {/* Schedule Title */}
+              <Row className="mb-3">
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Schedule Title</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="text"
+                        placeholder="Type a title..."
+                        {...formik.getFieldProps("title")}
+                      />
+                    </Col>
                     {formik.touched.title && formik.errors.title ? (
                       <div className="text-danger">{formik.errors.title}</div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
+                  </Form.Group>
+                </Col>
 
-              {/* Job Option */}
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Job<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      value={optionJobs.find(
-                        (job) => job.value === formik.values.jobId
-                      )}
-                      onChange={(selectedOption) =>
-                        formik.setFieldValue("jobId", selectedOption.value)
-                      }
-                      className="basic-single-select"
-                      options={optionJobs}
-                      classNamePrefix="select"
-                      placeholder="Select a Job"
-                    />
+                {/* Job Option */}
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Job</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Select
+                        value={optionJobs.find(
+                          (job) => job.value === formik.values.jobId
+                        )}
+                        onChange={(selectedOption) =>
+                          formik.setFieldValue("jobId", selectedOption.value)
+                        }
+                        className="basic-single-select"
+                        options={optionJobs}
+                        classNamePrefix="select"
+                        placeholder="Select a Job"
+                        onBlur={() => formik.setFieldTouched("jobId", true)}
+                      />
+                    </Col>
                     {formik.touched.jobId && formik.errors.jobId ? (
                       <div className="text-danger">{formik.errors.jobId}</div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            {/* Candidate Name and Interviewers */}
-            <Row className="mb-3">
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Candidate Name<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      value={optionCandidates.find(
-                        (candidate) =>
-                          candidate.value === formik.values.candidateId
-                      )}
-                      onChange={(selectedOption) =>
-                        formik.setFieldValue(
-                          "candidateId",
-                          selectedOption.value
-                        )
-                      }
-                      options={optionCandidates}
-                      className="basic-single-select"
-                      classNamePrefix="select"
-                      placeholder="Select a Candidate"
-                    />
+              {/* Candidate Name and Interviewers */}
+              <Row className="mb-4">
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Candidate Name</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Select
+                        value={optionCandidates.find(
+                          (candidate) =>
+                            candidate.value === formik.values.candidateId
+                        )}
+                        onChange={(selectedOption) =>
+                          formik.setFieldValue(
+                            "candidateId",
+                            selectedOption.value
+                          )
+                        }
+                        options={optionCandidates}
+                        className="basic-single-select"
+                        classNamePrefix="select"
+                        placeholder="Select a Candidate"
+                      />
+                    </Col>
                     {formik.touched.candidateId && formik.errors.candidateId ? (
                       <div className="text-danger">
                         {formik.errors.candidateId}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Interviewers<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      isMulti
-                      value={optionInterviews.filter((interviewer) =>
-                        formik.values.interviewerSet.includes(interviewer.value)
-                      )}
-                      onChange={(selectedOptions) =>
-                        formik.setFieldValue(
-                          "interviewerSet",
-                          selectedOptions.map((option) => option.value)
-                        )
-                      }
-                      options={optionInterviews}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                      placeholder="Select interviewers"
-                    />
+                  </Form.Group>
+                </Col>
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Interviewers</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Select
+                        isMulti
+                        value={optionInterviews.filter((interviewer) =>
+                          formik.values.interviewerSet.includes(
+                            interviewer.value
+                          )
+                        )}
+                        onChange={(selectedOptions) =>
+                          formik.setFieldValue(
+                            "interviewerSet",
+                            selectedOptions.map((option) => option.value)
+                          )
+                        }
+                        options={optionInterviews}
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        placeholder="Select interviewers"
+                      />
+                    </Col>
                     {formik.touched.interviewerSet &&
                     formik.errors.interviewerSet ? (
                       <div className="text-danger">
                         {formik.errors.interviewerSet}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            {/* Date and Location */}
-            <Row className="mb-3">
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Schedule Date<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="date"
-                      {...formik.getFieldProps("scheduleDate")}
-                    />
+              {/* Date and Location */}
+              <Row className="mb-4">
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Schedule Date</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="date"
+                        {...formik.getFieldProps("scheduleDate")}
+                      />
+                    </Col>
                     {formik.touched.scheduleDate &&
                     formik.errors.scheduleDate ? (
                       <div className="text-danger">
                         {formik.errors.scheduleDate}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Location<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="text"
-                      placeholder="Type a location..."
-                      {...formik.getFieldProps("location")}
-                    />
+                  </Form.Group>
+                </Col>
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Location</strong>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="text"
+                        placeholder="Type a location..."
+                        {...formik.getFieldProps("location")}
+                      />
+                    </Col>
                     {formik.touched.location && formik.errors.location ? (
                       <div className="text-danger">
                         {formik.errors.location}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            {/* Time and Recruiter */}
-            <Row className="mb-3">
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    From<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="time"
-                      {...formik.getFieldProps("scheduleTimeFrom")}
-                    />
+              {/* Time and Recruiter */}
+              <Row className="mb-4">
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>From</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="time"
+                        {...formik.getFieldProps("scheduleTimeFrom")}
+                      />
+                    </Col>
                     {formik.touched.scheduleTimeFrom &&
                     formik.errors.scheduleTimeFrom ? (
                       <div className="text-danger">
                         {formik.errors.scheduleTimeFrom}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    To<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="time"
-                      {...formik.getFieldProps("scheduleTimeTo")}
-                    />
+                  </Form.Group>
+                </Col>
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>To</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="time"
+                        {...formik.getFieldProps("scheduleTimeTo")}
+                      />
+                    </Col>
                     {formik.touched.scheduleTimeTo &&
                     formik.errors.scheduleTimeTo ? (
                       <div className="text-danger">
                         {formik.errors.scheduleTimeTo}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            {/* Recruiter */}
-            <Row className="mb-3">
-              <Col xs={12} md={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Recruiter<span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      value={optionRecruiters.find(
-                        (recruiter) =>
-                          recruiter.value === formik.values.recruiterId
-                      )}
-                      onChange={(selectedOption) =>
-                        formik.setFieldValue(
-                          "recruiterId",
-                          selectedOption.value
-                        )
-                      }
-                      options={optionRecruiters}
-                      className="basic-single-select"
-                      classNamePrefix="select"
-                      placeholder="Select a recruiter"
-                    />
+              {/* Recruiter and meetingId*/}
+              <Row className="mb-4">
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Recruiter</strong>
+                      <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Select
+                        value={optionRecruiters.find(
+                          (recruiter) =>
+                            recruiter.value === formik.values.recruiterId
+                        )}
+                        onChange={(selectedOption) =>
+                          formik.setFieldValue(
+                            "recruiterId",
+                            selectedOption.value
+                          )
+                        }
+                        options={optionRecruiters}
+                        className="basic-single-select"
+                        classNamePrefix="select"
+                        placeholder="Select a recruiter"
+                      />
+                    </Col>
                     {formik.touched.recruiterId && formik.errors.recruiterId ? (
                       <div className="text-danger">
                         {formik.errors.recruiterId}
                       </div>
                     ) : null}
-                  </Col>
-                </Form.Group>
-              </Col>
+                  </Form.Group>
+                </Col>
 
-              <Col xs={12} md={6}>
-                <Form.Group as={Row} style={{ alignItems: "normal" }}>
-                  <Form.Label column sm={3}>
-                    Note
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      {...formik.getFieldProps("note")}
-                    />
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                <Col xs={12} md={6}>
+                  <Form.Group as={Row}>
+                    <Form.Label column sm={3}>
+                      <strong>Meeting Id</strong>
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Control
+                        type="text"
+                        placeholder="Type a meetingId..."
+                        {...formik.getFieldProps("meetingId")}
+                      />
+                    </Col>
+                    {formik.touched.meetingId && formik.errors.meetingId ? (
+                      <div className="text-danger">
+                        {formik.errors.meetingId}
+                      </div>
+                    ) : null}
+                  </Form.Group>
+                </Col>
+              </Row>
 
+              <Row className="mb-4">
+                <Col xs={12} md={9}>
+                  <Form.Group as={Row} style={{ alignItems: "normal" }}>
+                    <Form.Label column sm={2}>
+                      <strong>Note</strong>
+                    </Form.Label>
+                    <Col sm={10}>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        {...formik.getFieldProps("note")}
+                      />
+                    </Col>
+                  </Form.Group>
+                </Col>
+              </Row>
+            </div>
             {/* Submit button */}
-            <Row className="mt-4">
-              <Col className="d-flex justify-content-center">
-                <button
-                  type="submit"
-                  className="button-form button-form--primary"
-                >
-                  Create Schedule
-                </button>
-                <button
-                  className="button-form button-form--primary"
-                  onClick={() => navigate(-1)}
-                >
-                  Cancel
-                </button>
-              </Col>
-            </Row>
+          </div>
+          <Row className="mt-4">
+            <Col className="d-flex justify-content-center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleShow(); // Hiển thị modal
+                }}
+                className="button-form button-form--primary"
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                className="button-form"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </button>
+            </Col>
           </Row>
+
+          <Modal show={show} onHide={handleClose} className="custom-modal">
+            <Modal.Header closeButton>
+              <Modal.Title>Create new Interview Schedule</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Are you sure you want to create new schedule?
+            </Modal.Body>
+            <Modal.Footer style={{ justifyContent: "space-evenly" }}>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="button-form button-form--danger"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="button-form button-form--primary"
+                onClick={() => {
+                  formik.handleSubmit();
+                  handleClose();
+                }}
+              >
+                OK
+              </button>
+            </Modal.Footer>
+          </Modal>
         </Form>
       </div>
-    </Container>
+    </div>
   );
 };
 

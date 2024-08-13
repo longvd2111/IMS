@@ -1,15 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaEye, FaRegEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { departmentOffer, statusOffer } from "~/data/Constants";
-const TableOffers = ({ filterOffer, candidate, dataOffer }) => {
+const TableOffers = ({ filterOffer, candidate, dataOffer, currentPage }) => {
   const navigate = useNavigate();
-
-  console.log(candidate, "candidate");
   const getCandidateEmail = (candidateId) => {
     const candidateData = candidate.find((c) => c.id === candidateId);
     return candidateData ? candidateData.email : "N/A";
   };
+  useEffect(() => {
+    localStorage.setItem("currentPage", currentPage);
+  }, [currentPage]);
   return (
     <table className="table table--striped table--bordered table--hover table--responsive">
       <thead className="table__head">
@@ -38,17 +39,21 @@ const TableOffers = ({ filterOffer, candidate, dataOffer }) => {
               <td className="table__cell">
                 {departmentOffer[offer.department]}
               </td>
-              <td className="table__cell">{offer.note}</td>
-              <td className="table__cell">{statusOffer[offer.offerStatus]}</td>
+              <td className="table__cell">{offer.note || "N/A"}</td>
               <td className="table__cell">
-                <FaEye
-                  onClick={() => navigate(`/offer/${offer.id}`)}
-                  style={{ cursor: "pointer" }}
-                />
-                <FaRegEdit
-                  onClick={() => navigate(`/offer/edit/${offer.id}`)}
-                  style={{ cursor: "pointer", marginLeft: "10px" }}
-                />
+                {statusOffer[offer.offerStatus] || "N/A"}
+              </td>
+              <td className="table__cell">
+                <div className="button-group">
+                  <FaEye
+                    onClick={() => navigate(`/offer/${offer.id}`)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <FaRegEdit
+                    onClick={() => navigate(`/offer/edit/${offer.id}`)}
+                    style={{ cursor: "pointer", marginLeft: "10px" }}
+                  />
+                </div>
               </td>
             </tr>
           ))

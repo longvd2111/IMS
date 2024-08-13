@@ -64,14 +64,14 @@
   color: #797777;
 }
 
-.search-container button {
+/* .search-container button {
   padding: 7px 30px;
   background-color: #cdd0d4;
   color: #000000;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
+} */
 
 
 
@@ -101,7 +101,9 @@
 
 .button-form--success {}
 
-.interview-page_table {}
+.interview-page_table {
+  margin-top: 24px;
+}
 
 
 

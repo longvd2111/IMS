@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Col, Row } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import "react-toastify/dist/ReactToastify.css";
 import { resetPwApi } from "~/services/userServices";
 import { toast } from "react-toastify";
@@ -15,7 +15,6 @@ const ForgotPassword = () => {
   const handleForgotPassword = async () => {
     setLoadingApi(true);
     try {
-      console.log("check mail>>>", email);
       let res = await resetPwApi(email);
 
       if (res) {
@@ -26,12 +25,6 @@ const ForgotPassword = () => {
       toast.error(error.data);
     }
     setLoadingApi(false);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleForgotPassword();
-    }
   };
 
   return (
@@ -67,10 +60,11 @@ const ForgotPassword = () => {
         </div>
         <Row style={{ justifyContent: "center" }}>
           <Col
-            md={8}
+            md={6}
             style={{
               display: "flex",
               justifyContent: "center",
+              padding: 0,
             }}
           >
             <button
@@ -89,19 +83,12 @@ const ForgotPassword = () => {
               Reset Password
             </button>
           </Col>
-        </Row>
-        <Row
-          style={{
-            marginTop: "8px",
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
           <Col
-            md={8}
+            md={6}
             style={{
               display: "flex",
               justifyContent: "center",
+              padding: 0,
             }}
           >
             <button

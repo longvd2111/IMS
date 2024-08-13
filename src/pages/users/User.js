@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {  Row } from "react-bootstrap";
+import { Row } from "react-bootstrap";
 import "../../assets/css/job-css/Job.css";
 import "../../assets/css/user-css/User.css";
 import { Link } from "react-router-dom";
 import UsersList from "../users/UserList";
 import SearchUser from "../users/SearchUser";
-import { IoMdAddCircleOutline } from "react-icons/io";
 import Pagination from "../../components/common/Pagination";
 import ApiUser from "~/services/usersApi";
 
@@ -35,8 +34,6 @@ export default function User() {
     loadDataUser();
   }, []);
 
-  console.log(usersList, "user");
-
   const filterUsers = usersList.filter((user) => {
     const searchMatch =
       !searchQuery ||
@@ -59,24 +56,26 @@ export default function User() {
 
   return (
     <div className="App">
-      <h5 className="user-subtitle">User List</h5>
+      <div className="breadcrumb__group">
+        <span className="breadcrumb-link">User List</span>
+      </div>
       <Row style={{ marginBottom: "-20px" }}>
         <SearchUser onSearch={handleSearch} />
       </Row>
-      <div className="changed">
-        <div className="candidate-button" style={{ float: "right" }}>
-          <Link to="/user/add">
-            <IoMdAddCircleOutline className="add-form" />
+
+      {role !== "ROLE_INTERVIEWER" && (
+        <div className="interview-page_link" style={{ marginBottom: "8px" }}>
+          <Link className="button-form button-form--success" to={`/user/add`}>
+            Add new
           </Link>
         </div>
-        <UsersList usersList={displayUsers} />
-        <Pagination
-          currentPage={currentPage}
-          totalItems={Math.ceil(filterUsers.length / itemsPerPage)}
-        
-          onPageChange={handlePageChange}
-        />
-      </div>
+      )}
+      <UsersList usersList={displayUsers} />
+      <Pagination
+        currentPage={currentPage}
+        totalItems={Math.ceil(filterUsers.length / itemsPerPage)}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }

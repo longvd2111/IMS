@@ -3,384 +3,343 @@ import { Col, Container, Row, Form } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaAngleRight } from "react-icons/fa";
 import ApiUser from "~/services/usersApi";
-import Select from "react-select"; // Import Select component from react-select
+import Select from "react-select";
 import "../../assets/css/job-css/JobForm.css";
-import {optionsGender,optionsUserRole,optionsDepartment,optionsUserStatus} from "~/data/Constants"
+import {
+  optionsGender,
+  optionsUserRole,
+  optionsDepartment,
+  optionsUserStatus,
+} from "~/data/Constants";
 import { toast } from "react-toastify";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { convertDobArrayToISO } from "~/utils/Validate";
+import "../../assets/css/user-css/updateUser.module.css";
+
 const UpdateUser = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    dob: "",
-    address: "",
-    phone: "",
-    gender: "",
-    userRole: "",
-    department: "",
-    note: "",
-    userStatus: "",
-  });
+  const [user, setUser] = useState(null); // Change default value to null
 
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
- 
+  const fetchUser = async (id) => {
+    const res = await ApiUser.getDetailUser(id);
+    if (res) {
+      setUser({ ...res, dob: convertDobArrayToISO(res.dob) });
+    }
+  };
 
   useEffect(() => {
-    const getUserById = async () => {
-      try {
-        const res = await ApiUser.getDetailUser(id);
-        if (res) {
-          setFormData({
-            fullName: res.fullName || "",
-            email: res.email || "",
-            dob: res.dob ? new Date(res.dob).toISOString().split("T")[0] : "",
-            address: res.address || "",
-            phone: res.phone || "",
-            gender: res.gender || "",
-            userRole: res.userRole || "",
-            department: res.department || "",
-            note: res.note || "",
-            userStatus: res.userStatus || "",
-          });
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        setError(error);
-        setLoading(false);
-      }
-    };
-
-    getUserById();
+    if (id) {
+      fetchUser(id);
+    }
   }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-  };
+  const formik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      id: user?.id || "",
+      fullName: user?.fullName || "",
+      email: user?.email || "",
+      dob: user?.dob || "",
+      address: user?.address || "",
+      phone: user?.phone || "",
+      gender: user?.gender || "",
+      userRole: user?.userRole || "",
+      department: user?.department || "",
+      userStatus: user?.userStatus || "",
+      note: user?.note || "",
+    },
+    validationSchema: Yup.object({
+      fullName: Yup.string()
+        .matches(
+          /^[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*(\s[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*)+$/,
+          "Full name is not valid!"
+        )
+        .required("Full name is required!"),
+      email: Yup.string()
+        .email("Invalid email address")
+        .matches(
+          /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
+          "Email must be in the format name@gmail.com"
+        )
+        .required("Email is required"),
+      dob: Yup.date()
+        .max(new Date(), "Date of Birth must be in the past!")
+        .required("Date of Birth is required!"),
+      phone: Yup.string()
+        .matches(/^[0-9]+$/, "Phone number must contain only digits")
+        .length(10, "Phone number must be exactly 10 digits"),
+      gender: Yup.string().required("Gender is required!"),
+      userRole: Yup.string().required("Role is required!"),
+      department: Yup.string().required("Department is required!"),
+    }),
+    onSubmit: async (values) => {
+      const userData = {
+        id: values.id,
+        address: values.address,
+        department: values.department,
+        dob: values.dob,
+        email: values.email,
+        fullName: values.fullName,
+        gender: values.gender,
+        note: values.note,
+        phone: values.phone,
+        userRole: values.userRole,
+        userStatus: values.userStatus,
+      };
 
-  const handleSelectChange = (selected, name) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: selected.value,
-    }));
-  };
+      console.log(userData);
 
-  const validateForm = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
-    const phoneRegex = /^\d{10}$/; 
-  
-    if (!formData.fullName) newErrors.fullName = "Full Name is required";
-    
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Email is not valid";
-    }
-  
-    if (!formData.phone) {
-      newErrors.phone = "Phone is required";
-    } else if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone = "Phone must be 10 digits";
-    }
-  
-    if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.userRole) newErrors.userRole = "User Role is required";
-    if (!formData.department) newErrors.department = "Department is required";
-    if (!formData.userStatus) newErrors.userStatus = "Status is required";
-  
-    if (!formData.dob) {
-      newErrors.dob = "Date of Birth is required";
-    } else {
-      const today = new Date();
-      const dob = new Date(formData.dob);
-      if (dob >= today) {
-        newErrors.dob = "Date of Birth must be in the past";
+      const res = await ApiUser.editUser(userData);
+      console.log(res);
+
+      if (res && res.success) {
+        navigate("/user");
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
       }
-    }
-  
-    return newErrors;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    const payload = {
-      id,
-      fullName: formData.fullName,
-      email: formData.email,
-      dob: formData.dob,
-      address: formData.address,
-      phone: formData.phone,
-      gender: formData.gender,
-      userRole: formData.userRole,
-      department: formData.department,
-      note: formData.note,
-      userStatus: formData.userStatus,
-    };
-
-    console.log("Update payload:", payload);
-
-    try {
-      await ApiUser.editUser(payload);
-      // console.log("User updated successfully!");
-      toast.success("Update user Successfully!")
-      navigate("/user");
-    } catch (error) {
-      console.error("Error updating user!", error);
-      
-      toast.error("Error updating user. Please try again.");
-    }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
+    },
+  });
 
   return (
     <Container className="mb-3">
       <div className="breadcrumb__group">
-        <span className="breadcrumb-link" onClick={() => navigate("/users")}>
+        <span className="breadcrumb-link" onClick={() => navigate("/user")}>
           User List
         </span>
         <FaAngleRight />
         <span className="breadcrumb-link__active">Edit User</span>
       </div>
-      <Row className="info-update">
-        
-      </Row>
-      <div className="content-job-form">
+      <div className="candidate-detail">
         <Row>
-          <Form onSubmit={handleSubmit}>
-            {/* Form fields */}
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Full Name <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      type="text"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                    />
-                    {errors.fullName && (
-                      <div className="text-danger">{errors.fullName}</div>
-                    )}
+          <Form onSubmit={formik.handleSubmit}>
+            <div className="section">
+              <div className="section-personal-info">
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Full Name</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control
+                          type="text"
+                          name="fullName"
+                          {...formik.getFieldProps("fullName")}
+                        />
+                      </Col>
+                      {formik.touched.fullName && formik.errors.fullName && (
+                        <div className="text-danger">
+                          {formik.errors.fullName}
+                        </div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Email <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                    {errors.email && (
-                      <div className="text-danger">{errors.email}</div>
-                    )}
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Email</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control {...formik.getFieldProps("email")} />
+                      </Col>
+                      {formik.touched.email && formik.errors.email && (
+                        <div className="text-danger">{formik.errors.email}</div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    D.O.B
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      type="date"
-                      name="dob"
-                      value={formData.dob}
-                      onChange={handleChange}
-                    />
-                    {errors.dob && (
-                      <div className="text-danger">{errors.dob}</div>
-                    )}
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>D.O.B</strong>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control
+                          type="date"
+                          {...formik.getFieldProps("dob")}
+                        />
+                      </Col>
+                      {formik.touched.dob && formik.errors.dob && (
+                        <div className="text-danger">{formik.errors.dob}</div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Address
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                    />
-                    {errors.address && (
-                      <div className="text-danger">{errors.address}</div>
-                    )}
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Address</strong>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control
+                          type="text"
+                          {...formik.getFieldProps("address")}
+                        />
+                      </Col>
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Phone number
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                    {errors.phone && (
-                      <div className="text-danger">{errors.phone}</div>
-                    )}
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Phone number</strong>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control
+                          type="text"
+                          name="phone"
+                          {...formik.getFieldProps("phone")}
+                        />
+                      </Col>
+                      {formik.touched.phone && formik.errors.phone && (
+                        <div className="text-danger">{formik.errors.phone}</div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Gender <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Select
-                      name="gender"
-                      options={optionsGender}
-                      value={optionsGender.find(option => option.value === formData.gender)}
-                      onChange={(selected) => handleSelectChange(selected, "gender")}
-                    />
-                    {errors.gender && (
-                      <div className="text-danger">{errors.gender}</div>
-                    )}
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Gender</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Select
+                          name="gender"
+                          options={optionsGender}
+                          value={optionsGender?.find(
+                            (s) => (s.value = formik.values?.gender)
+                          )}
+                          onChange={(option) =>
+                            formik.setFieldValue("gender", option.value)
+                          }
+                        />
+                      </Col>
+                      {formik.touched.gender && formik.errors.gender && (
+                        <div className="text-danger">
+                          {formik.errors.gender}
+                        </div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Role <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Select
-                      name="userRole"
-                      options={optionsUserRole}
-                      value={optionsUserRole.find(option => option.value === formData.userRole)}
-                      onChange={(selected) => handleSelectChange(selected, "userRole")}
-                    />
-                    {errors.userRole && (
-                      <div className="text-danger">{errors.userRole}</div>
-                    )}
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Role</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Select
+                          name="role"
+                          options={optionsUserRole}
+                          value={optionsUserRole?.find(
+                            (u) => u.value === formik.values?.userRole
+                          )}
+                          onChange={(option) =>
+                            formik.setFieldValue("role", option.value)
+                          }
+                        />
+                      </Col>
+                      {formik.touched.role && formik.errors.role && (
+                        <div className="text-danger">{formik.errors.role}</div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Department <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Select
-                      name="department"
-                      options={optionsDepartment}
-                      value={optionsDepartment.find(option => option.value === formData.department)}
-                      onChange={(selected) => handleSelectChange(selected, "department")}
-                    />
-                    {errors.department && (
-                      <div className="text-danger">{errors.department}</div>
-                    )}
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Department</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Select
+                          name="department"
+                          options={optionsDepartment}
+                          value={optionsDepartment?.find(
+                            (d) => d.value === formik.values?.department
+                          )}
+                          onChange={(option) =>
+                            formik.setFieldValue("department", option.value)
+                          }
+                        />
+                      </Col>
+                      {formik.touched.department &&
+                        formik.errors.department && (
+                          <div className="text-danger">
+                            {formik.errors.department}
+                          </div>
+                        )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Status
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Select
-                      name="userStatus"
-                      options={optionsUserStatus}
-                      value={optionsUserStatus.find(option => option.value === formData.userStatus)}
-                      onChange={(selected) => handleSelectChange(selected, "userStatus")}
-                    />
-                    {errors.userStatus && (
-                      <div className="text-danger">{errors.userStatus}</div>
-                    )}
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Status</strong>
+                        <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Select
+                          name="status"
+                          value={optionsUserStatus?.find(
+                            (uS) => uS.value === formik.values?.userStatus
+                          )}
+                          isDisabled={true}
+                        />
+                      </Col>
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Note
-                  </Form.Label>
-                  <Col sm={7}>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      name="note"
-                      value={formData.note}
-                      onChange={handleChange}
-                    />
-                    {errors.note && (
-                      <div className="text-danger">{errors.note}</div>
-                    )}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            {/* Submit and Cancel Buttons */}
-            <Row>
-              <div className="button-job">
-                <button type="submit" className="button-submit">
-                  Save
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        <strong>Note</strong>
+                      </Form.Label>
+                      <Col sm={7}>
+                        <Form.Control
+                          as="textarea"
+                          {...formik.getFieldProps("note")}
+                        />
+                      </Col>
+                      {formik.touched.note && formik.errors.note && (
+                        <div className="text-danger">{formik.errors.note}</div>
+                      )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <Row className="mt-4">
+              <Col className="d-flex justify-content-center">
+                <button
+                  type="submit"
+                  className="button-form button-form--primary"
+                >
+                  Update
                 </button>
                 <button
+                  className="button-form"
+                  onClick={() => navigate(-1)}
                   type="button"
-                  className="button-submit"
-                  onClick={() => navigate("/user")}
                 >
                   Cancel
                 </button>
-              </div>
+              </Col>
             </Row>
           </Form>
         </Row>

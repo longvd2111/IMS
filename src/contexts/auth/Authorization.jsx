@@ -9,16 +9,16 @@ const Authorization = ({ children }) => {
   const ROLE_INTERVIEWER = userRole.find(
     (role) => role.value === "ROLE_INTERVIEWER"
   );
+  const ROLE_ADMIN = userRole.find((role) => role.value === "ROLE_ADMIN");
 
-  if (!isAuthenticated() && location.pathname !== "/login") {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (
-    isAuthenticated() &&
-    (location.pathname === "/login" || location.pathname === "/forgot-pw")
-  ) {
-    return <Navigate to="/" replace />;
+  if (!isAuthenticated()) {
+    if (location.pathname !== "/login" && location.pathname !== "/forgot-pw") {
+      return <Navigate to="/login" replace />;
+    }
+  } else {
+    if (location.pathname === "/login" || location.pathname === "/forgot-pw") {
+      return <Navigate to="/" replace />;
+    }
   }
 
   if (user) {
@@ -37,9 +37,15 @@ const Authorization = ({ children }) => {
         "/interview/edit",
       ].some((path) => location.pathname.startsWith(path))
     ) {
-      // console.log(
-      //   "Redirecting to no-permission because user is an interviewer and trying to access restricted pages"
-      // );
+      return <Navigate to="/no-permission" replace />;
+    }
+
+    if (
+      user.role !== ROLE_ADMIN.value &&
+      ["/user", "/user/", "/user/add", "/user/edit"].some((path) =>
+        location.pathname.startsWith(path)
+      )
+    ) {
       return <Navigate to="/no-permission" replace />;
     }
   }

@@ -1,7 +1,7 @@
 .pagination{
     display: flex;
     justify-content: flex-end;
-margin: 1rem 3rem 0rem 0rem;
+margin: 8px 50px 0px 0px;
 }
 .pagination p{
     margin-right: 5px;

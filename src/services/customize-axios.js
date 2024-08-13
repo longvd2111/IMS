@@ -1,12 +1,15 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://ims-pjb03.ddns.net:8080/",
+  // baseURL: "http://localhost:8080/",
 });
 
 instance.interceptors.request.use(
   (config) => {
-    let token = sessionStorage.getItem("token");
+    let token = sessionStorage.getItem("token")
+      ? sessionStorage.getItem("token")
+      : localStorage.getItem("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -31,7 +34,6 @@ instance.interceptors.response.use(
       res.status = error.response.status;
       res.headers = error.response.headers;
     } else if (error.request) {
-      // console.log(error.request);
     } else {
       // Handle other errors
     }

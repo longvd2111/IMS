@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { FaEye } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { BiEdit } from "react-icons/bi";
@@ -10,11 +10,10 @@ import {
   optionsPosition,
 } from "~/data/Constants";
 import { convertToDay, convertToHour } from "~/utils/Validate";
-import { AuthContext } from "~/contexts/auth/AuthContext";
 
-const InterviewTable = ({ dataInterviews }) => {
+const InterviewTable = ({ dataInterviews, role }) => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+
   return (
     <table className="table">
       <thead>
@@ -42,11 +41,9 @@ const InterviewTable = ({ dataInterviews }) => {
                 {convertToHour(interview?.scheduleTimeTo)}
               </td>
               <td>
-                {
-                  InterviewResult.find(
-                    (ir) => ir.value === interview?.interviewResult
-                  )?.label
-                }
+                {InterviewResult.find(
+                  (ir) => ir.value === interview?.interviewResult
+                )?.label || "N/A"}
               </td>
               <td>
                 {
@@ -55,26 +52,26 @@ const InterviewTable = ({ dataInterviews }) => {
                   )?.label
                 }
               </td>
-              <td>
-                {
-                  optionsPosition.find((cp) => cp.value == interview?.position)
-                    ?.label
-                }
-              </td>
+              <td>{interview?.jobDTO?.name || "NaN"}</td>
               <td>
                 <FaEye
+                  data-testid="view-icon"
                   className="action__icon"
                   onClick={() => navigate(`/interview/${interview.id}`)}
                   style={{ cursor: "pointer" }}
                 />
-                {user?.role === "user" ? (
+                {role === "ROLE_INTERVIEWER" ? (
                   <FaRegHandPointUp
+                    data-testid="submit-icon"
                     className="action__icon"
-                    onClick={() => navigate(`/interview/${interview.id}`)}
+                    onClick={() =>
+                      navigate(`/interview/submit/${interview.id}`)
+                    }
                     style={{ cursor: "pointer" }}
                   />
                 ) : (
                   <BiEdit
+                    data-testid="edit-icon"
                     className="action__icon"
                     onClick={() => navigate(`/interview/edit/${interview.id}`)}
                     style={{ cursor: "pointer" }}

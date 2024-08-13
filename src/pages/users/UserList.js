@@ -31,7 +31,7 @@ export default function UsersList({ usersList }) {
         <tbody className="table__body">
           {usersList.map((user) => (
             <tr key={user.id} className="table__row">
-              <td className="table__cell">{user.fullName}</td>
+              <td className="table__cell">{user.username}</td>
               <td className="table__cell">{user.email}</td>
               <td className="table__cell">{user.phone}</td>
               <td className="table__cell">{roleUser[user.userRole]}</td>
@@ -39,11 +39,11 @@ export default function UsersList({ usersList }) {
               <td className="table__cell">
                 <FaEye
                   onClick={() => handleView(user.id)}
-                  style={{ cursor: "pointer", marginRight: "10px" }}
+                  style={{ cursor: "pointer", marginRight: "10px",height:"20px",width:"20px" }}
                 />
                 <FaEdit
                   onClick={() => handleEdit(user.id)}
-                  style={{ cursor: "pointer", marginRight: "10px" }}
+                  style={{ cursor: "pointer", marginRight: "10px",height:"20px",width:"20px" }}
                 />
               </td>
             </tr>

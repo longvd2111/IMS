@@ -124,3 +124,32 @@
 .dropdown__item-icon {
   margin-right: 10px;
 }
+
+
+
+/* CustomModal.css */
+.custom-modal .modal-dialog {
+  width: 50%;
+  /* Tùy chỉnh theo % mong muốn */
+  max-width: 400px;
+  /* Giới hạn tối đa */
+  min-width: 300px;
+  /* Giới hạn tối thiểu */
+}
+
+
+
+
+
+.custom-modal .modal-content .modal-body {
+  text-align: center;
+}
+
+.custom-modal .modal-content .modal-header .btn-close {
+  margin: 0;
+}
+
+.custom-modal .modal-content .modal-header .modal-title {
+  width: 100%;
+  text-align: center;
+}

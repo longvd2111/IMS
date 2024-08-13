@@ -19,7 +19,6 @@ export const userRole = [
 
 // status trang list interview
 export const InterviewStatus = [
-  { value: "NEW", label: "New" },
   { value: "INVITED", label: "Invited" },
   { value: "INTERVIEWED", label: "Interviewed" },
   { value: "CANCELLED", label: "Cancelled" },
@@ -36,6 +35,7 @@ export const InterviewStatus = [
 // const FAIL = "Fail";
 
 export const InterviewResult = [
+  { value: "NAN", label: "N/A" },
   { value: "PASS", label: "Pass" },
   { value: "FAIL", label: "Fail" },
 ];
@@ -47,21 +47,45 @@ export const InterviewResult = [
 // gender
 const MALE = "Male";
 const FEMALE = "Female";
-
+const OTHERS = "Others";
 export const CandidateGender = {
   MALE,
   FEMALE,
+  OTHERS,
 };
 
 //Candidate Status
 const OPEN = "Open";
 const CLOSED = "Closed";
 const BANNED = "Banned";
-
+const WAITING_FOR_INTERVIEW = "Waiting for interview";
+const IN_PROGRESS = "In progress";
+const CANCELLED_INTERVIEW = "Cancelled interview";
+const PASSED_INTERVIEW = "Passed interview";
+const FAILED_INTERVIEW = "Failed interview";
+const WAITING_FOR_APPROVAL = "Waiting for approval";
+const APPROVED_OFFER = "Approved offer";
+const REJECTED_OFFER = "Rejected offer";
+const WAITING_FOR_RESPONSE = "Waiting for response";
+const ACCEPTED_OFFER = "Accepted offer";
+const DECLINED_OFFER = "Declined offer";
+const CANCELLED_OFFER = "Cancelled offer";
 export const CandidateStatus = {
   OPEN,
   CLOSED,
   BANNED,
+  WAITING_FOR_APPROVAL,
+  WAITING_FOR_INTERVIEW,
+  IN_PROGRESS,
+  CANCELLED_INTERVIEW,
+  PASSED_INTERVIEW,
+  FAILED_INTERVIEW,
+  APPROVED_OFFER,
+  REJECTED_OFFER,
+  WAITING_FOR_RESPONSE,
+  ACCEPTED_OFFER,
+  DECLINED_OFFER,
+  CANCELLED_OFFER,
 };
 //Candidate Current Position
 const BACKEND_DEVELOPER = "Backend Developer";
@@ -76,6 +100,7 @@ export const CandidatePosition = {
   TESTER,
   PROJECT_MANAGER,
 };
+
 //Candidate Highest Level
 const HIGH_SCHOOL = "High School";
 const BACHELOR_DEGREE = "Bachelor's Degree";
@@ -116,7 +141,7 @@ const optionsPosition = [
 const optionsGender = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
-  { value: "OTHER", label: "Other" },
+  { value: "OTHERS", label: "Others" },
 ];
 
 const optionsLevel = [
@@ -133,9 +158,26 @@ const optionsRecruiter = [
   { value: 4, label: "Recruiter" },
 ];
 
+const optionCreateStatus = [
+  { value: "OPEN", label: "Open" },
+  { value: "BANNED", label: "Banned" },
+];
+
 const optionsStatus = [
   { value: "OPEN", label: "Open" },
-  { value: "BAN", label: "Ban" },
+  { value: "BANNED", label: "Banned" },
+  { value: "WAITING_FOR_INTERVIEW", label: "Waiting for interview" },
+  { value: "IN_PROGRESS", label: "In progress" },
+  { value: "CANCELLED_INTERVIEW", label: "Cancelled interview" },
+  { value: "PASSED_INTERVIEW", label: "Passed interview" },
+  { value: "FAILED_INTERVIEW", label: "Failed interview" },
+  { value: "WAITING_FOR_APPROVAL", label: "Waiting for approval" },
+  { value: "APPROVED_OFFER", label: "Approved offer" },
+  { value: "REJECTED_OFFER", label: "Rejected offer" },
+  { value: "WAITING_FOR_RESPONSE", label: "Waiting for response" },
+  { value: "ACCEPTED_OFFER", label: "Accepted offer" },
+  { value: "DECLINED_OFFER", label: "Declined offer" },
+  { value: "CANCELLED_OFFER", label: "Cancelled offer" },
 ];
 
 const optionsDepartment = [
@@ -154,6 +196,7 @@ const optionsUserStatus = [
 ];
 
 export {
+  optionCreateStatus,
   optionsSkills,
   optionsPosition,
   optionsGender,
@@ -239,7 +282,8 @@ export const offerPosition = {
 
 // Thêm vào cuối file Constants.js
 
-export const getButtonsByStatus = (status) => {
+export const getButtonsByStatus = (status, userRole) => {
+  const isAdminOrManager = userRole === "ROLE_RECRUITER";
   switch (status) {
     case "WAITING_FOR_APPROVAL":
       return {
@@ -247,25 +291,35 @@ export const getButtonsByStatus = (status) => {
           {
             label: "Approve",
             status: "APPROVED_OFFER",
-            style: { background: "#acecab" },
+            testId: "button-approve",
+            class: "button-form button-form--success",
           },
           {
             label: "Reject",
             status: "REJECTED_OFFER",
-            style: { backgroundColor: "#f2979d" },
+            testId: "button-reject",
+            class: "button-form button-form--danger",
           },
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
-            style: { backgroundColor: "#f2979d" },
+            testId: "button-cancel",
+            class: "button-form",
           },
         ],
         bottomButtons: [
           {
             label: "Edit",
             action: "EDIT",
+            testId: "button-edit",
+            class: "button-form button-form--warning",
           },
-          { label: "Cancel", action: "CANCEL" },
+          {
+            label: "Cancel",
+            action: "CANCEL",
+            testId: "button-cancel-bottom",
+            class: "button-form",
+          },
         ],
       };
     case "APPROVED_OFFER":
@@ -275,14 +329,23 @@ export const getButtonsByStatus = (status) => {
             label: "Mark as sent to candidate",
             status: "WAITING_FOR_RESPONSE",
             style: { backgroundColor: "#b0cdfa" },
+            testId: "button-mark-sent",
           },
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
             style: { backgroundColor: "#f2979d" },
+            testId: "button-cancel",
           },
         ],
-        bottomButtons: [],
+        bottomButtons: [
+          {
+            label: "Cancel",
+            action: "CANCEL",
+            testId: "button-cancel-bottom",
+            style: { backgroundColor: "#f2979d" },
+          },
+        ],
       };
     case "WAITING_FOR_RESPONSE":
       return {
@@ -291,19 +354,29 @@ export const getButtonsByStatus = (status) => {
             label: "Accepted Offer",
             status: "ACCEPTED_OFFER",
             style: { backgroundColor: "#b0cdfa" },
+            testId: "button-accepted",
           },
           {
             label: "Declined Offer",
             status: "DECLINED_OFFER",
             style: { backgroundColor: "#fad3b0" },
+            testId: "button-declined",
           },
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
             style: { backgroundColor: "#f2979d" },
+            testId: "button-cancel",
           },
         ],
-        bottomButtons: [],
+        bottomButtons: [
+          {
+            label: "Cancel",
+            action: "CANCEL",
+            testId: "button-cancel-bottom",
+            style: { backgroundColor: "#f2979d" },
+          },
+        ],
       };
     case "ACCEPTED_OFFER":
       return {
@@ -312,9 +385,17 @@ export const getButtonsByStatus = (status) => {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
             style: { backgroundColor: "#f2979d" },
+            testId: "button-cancel",
           },
         ],
-        bottomButtons: [],
+        bottomButtons: [
+          {
+            label: "Cancel",
+            action: "CANCEL",
+            testId: "button-cancel-bottom",
+            style: { backgroundColor: "#f2979d" },
+          },
+        ],
       };
     case "REJECTED_OFFER":
     case "DECLINED_OFFER":
@@ -327,15 +408,15 @@ export const getButtonsByStatus = (status) => {
 
 export const headersExport = [
   { label: "No.", key: "id" },
-  { label: "Candidate ID", key: "candidate.1" },
-  { label: "Candidate name", key: "candidate.2" },
+  { label: "Candidate ID", key: "candidateId" },
+  { label: "Candidate name", key: "candidateName" },
   { label: "Approved by", key: "approvedBy" },
   { label: "Contract type", key: "contractType" },
   { label: "Position", key: "position" },
   { label: "Level", key: "offerLevel" },
   { label: "Department", key: "department" },
-  { label: "Recruiter owner", key: "recruiterOwner.name" },
-  { label: "Interviewer", key: "interviewSchedule.interviewerDto[0].name" },
+  { label: "Recruiter owner", key: "recruiterOwnerName" },
+  { label: "Interviewer", key: "interviewerName" },
   { label: "Contract start from", key: "contractFrom" },
   { label: "Contract to", key: "contractTo" },
   { label: "Basic salary", key: "basicSalary" },
@@ -354,3 +435,27 @@ export const statusUser = {
   DEACTIVATED: "Deactivated",
 };
 //////
+//Job Status
+const DRAFT = "Draft";
+
+export const JobStatus = {
+  DRAFT,
+  OPEN,
+  CLOSED,
+};
+//Job Level
+const FRESHER = "Fresher";
+const JUNIOR = "Junior";
+const SENIOR = "Senior";
+const LEADER = "Leader";
+const TRAINER = "Trainer";
+const MENTOR = "Mentor";
+
+export const JobLevel = {
+  FRESHER,
+  JUNIOR,
+  SENIOR,
+  LEADER,
+  TRAINER,
+  MENTOR,
+};

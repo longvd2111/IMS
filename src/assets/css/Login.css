@@ -8,6 +8,21 @@
     margin: 0;
 }
 
+.logo-login {
+    background-color: #343a40;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    width: 55px;
+    border-radius: 6px;
+
+}
+
 .login-container {
     background-color: beige;
     padding: 20px;
@@ -91,4 +106,5 @@ form .row {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    margin-bottom: 8px;
 }

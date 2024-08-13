@@ -22,12 +22,13 @@ const SearchOffer = ({ onSearch }) => {
           <FaSearch className="icon" />
         </label>
 
-        <label>
+        <label  data-testid="department">
           <select
+          
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
           >
-            <option value="">Department</option>
+            <option value="" disabled>Department</option>
             {Object.entries(departmentOffer).map(([value, name]) => (
               <option key={value} value={value}>
                 {name}

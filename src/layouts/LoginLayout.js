@@ -1,7 +1,6 @@
 import React from "react";
 import "~/assets/css/Main.css";
 import { Outlet } from "react-router-dom";
-import { Bounce, ToastContainer } from "react-toastify";
 
 function LoginLayOut() {
   return (

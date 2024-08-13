@@ -20,7 +20,9 @@
 .content-offer-form{
     background-color:  #f1f6fb;
     padding: 10px 10px;
-    
+    box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
+    border-radius: 10px;
+    margin-top: 10px;
 }
 .button-offer.btn-top{
     text-align: end;
@@ -94,6 +96,7 @@
   .offer-button{
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 10px;
   }
 
 
@@ -128,3 +131,21 @@
   justify-content: flex-end;
   margin-bottom: -1rem;
  }
+ .bottom-group{
+  margin-top: 30px;
+ }
+ .button-submit.button-form--success {
+  background-color: #ACECAB;
+}
+
+.button-submit.button-form--danger {
+  background-color: #F3A0A0;
+}
+
+.button-submit.button-form--primary {
+  background-color: #B0CDFA;
+}
+
+.button-submit.button-form--warning {
+  background-color: #FAD3B0;
+}

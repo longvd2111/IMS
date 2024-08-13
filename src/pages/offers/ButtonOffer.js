@@ -9,6 +9,7 @@ export default function ButtonOffer({ dataOffer }) {
   const [showModal, setShowModal] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [processedData, setProcessedData] = useState([]);
 
   const handleExport = () => {
     setShowModal(true);
@@ -18,6 +19,45 @@ export default function ButtonOffer({ dataOffer }) {
     setShowModal(false);
     setFromDate("");
     setToDate("");
+  };
+
+  const formatDate = (dateArray) => {
+    if (!Array.isArray(dateArray) || dateArray.length !== 3) return "";
+    const [year, month, day] = dateArray;
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+      2,
+      "0"
+    )}`;
+  };
+  const processDataForExport = (data) => {
+    return data.map((item) => {
+      const candidateIds = Object.keys(item.candidate);
+      const processedItem = {
+        id: item.id,
+        candidateId: candidateIds[0] || "",
+        candidateName: item.candidate?.[candidateIds] || "",
+        approvedBy: item.approvedBy || "N/A",
+        contractType: item.contractType || "",
+        position: item.position || "",
+        offerLevel: item.offerLevel || "",
+        department: item.department || "",
+        recruiterOwnerName: item.recruiterOwner?.name || "",
+        interviewerName:
+          item.interviewSchedule?.interviewerDto?.[0]?.name || "",
+        contractFrom: Array.isArray(item.contractFrom)
+          ? formatDate(item.contractFrom)
+          : item.contractFrom,
+        contractTo: Array.isArray(item.contractTo)
+          ? formatDate(item.contractTo)
+          : item.contractTo,
+        basicSalary:
+          typeof item.basicSalary === "number"
+            ? item.basicSalary.toFixed(2)
+            : item.basicSalary || "",
+        note: item.note || "",
+      };
+      return processedItem;
+    });
   };
 
   const handleSubmit = () => {
@@ -35,30 +75,39 @@ export default function ButtonOffer({ dataOffer }) {
     }
 
     const filtered = dataOffer.filter((offer) => {
-      const offerDate = new Date(offer.dueDate);
+      const offerDate = new Date(
+        offer.dueDate[0],
+        offer.dueDate[1] - 1,
+        offer.dueDate[2]
+      );
       return offerDate >= startDate && offerDate <= endDate;
     });
 
     if (filtered.length === 0) {
       alert("No offer on the selected date");
     } else {
-      // Nếu có dữ liệu, tự động kích hoạt xuất CSV
-      document.getElementById("csvLink").click();
+      const processed = processDataForExport(filtered);
+      setProcessedData(processed);
+      // Delay to ensure state is updated before triggering download
+      setTimeout(() => document.getElementById("csvLink").click(), 0);
       setShowModal(false);
     }
   };
-
   return (
     <div className="changed">
       <div className="offer-button">
-        <Link
-          className="button-form"
+        <Button
+          className="button-form button-form--success"
           style={{ marginRight: "10px" }}
+          as={Link}
           to="/offer/add"
         >
           Add New
-        </Link>
-        <Button className="button-form" onClick={handleExport}>
+        </Button>
+        <Button
+          className="button-form button-form--primary"
+          onClick={handleExport}
+        >
           Export Offer
         </Button>
       </div>
@@ -68,7 +117,7 @@ export default function ButtonOffer({ dataOffer }) {
         <div className="modal-input">
           <Form className="modal-form">
             <Row>
-              <Col >
+              <Col>
                 <Form.Group className="modal-date">
                   From
                   <Form.Control
@@ -81,7 +130,6 @@ export default function ButtonOffer({ dataOffer }) {
                 </Form.Group>
               </Col>
               <Col>
-                {" "}
                 <Form.Group className="modal-date">
                   To
                   <Form.Control
@@ -98,10 +146,16 @@ export default function ButtonOffer({ dataOffer }) {
         </div>
 
         <div className="offer-button btn-modal ">
-          <button className="button-form" onClick={handleCloseModal}>
+          <button
+            className="button-form button-form--danger"
+            onClick={handleCloseModal}
+          >
             Cancel
           </button>
-          <button className="button-form" onClick={handleSubmit}>
+          <button
+            className="button-form button-form--success"
+            onClick={handleSubmit}
+          >
             Export
           </button>
         </div>
@@ -111,13 +165,8 @@ export default function ButtonOffer({ dataOffer }) {
           enclosingCharacter={``}
           separator=";"
           headers={headersExport}
-          filename="Offerlist"
-          data={dataOffer.filter((offer) => {
-            const offerDate = new Date(offer.dueDate);
-            return (
-              offerDate >= new Date(fromDate) && offerDate <= new Date(toDate)
-            );
-          })}
+          filename={`OfferList-${fromDate}-${toDate}`}
+          data={processedData}
         />
       </Modal>
     </div>

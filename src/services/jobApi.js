@@ -1,25 +1,31 @@
-import axios from '~/services/customize-axios';
+import axios from "~/services/customize-axios";
 
+const fetchAllJobs = () => {
+  return axios.get("/api/jobs", { params: { index: 0, size: 100 } });
+};
 
- const fetchAllJobs = () => {
-    return axios.get("/api/jobs", { params: {index:0,size:1000} }); 
- }
+const fetchJobsById = (id) => {
+  return axios.get(`/api/jobs/${id}`);
+};
+const createJobs = (JobsData) => {
+  return axios.post("/api/jobs", JobsData);
+};
+const deleteJobs = (id) => {
+  return axios.delete(`/api/jobs?id=${id}`);
+};
 
- const fetchJobsById = (id) => {
-    return axios.get(`/api/jobs/${id}`); 
- }
- const createJobs = (JobsData) => {
-   return axios.post("/api/jobs", JobsData);
- }
- const deleteJobs = (id) => {
-   return axios.delete(`/api/jobs?id=${id}`);
- }
- 
- const updateJob = (updatedJobData) => {
+const updateJob = (updatedJobData) => {
   return axios.put(`/api/jobs`, updatedJobData);
 };
-const importJob = (jobData)=>{
+const importJob = (jobData) => {
   return axios.post(`/api/jobs`, jobData);
-}
+};
 
- export {fetchAllJobs,fetchJobsById,createJobs,deleteJobs,updateJob,importJob};
+export {
+  fetchAllJobs,
+  fetchJobsById,
+  createJobs,
+  deleteJobs,
+  updateJob,
+  importJob,
+};

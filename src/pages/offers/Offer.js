@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Row } from "react-bootstrap";
 import SearchOffer from "./SearchOffer";
@@ -46,12 +45,12 @@ export default function Offer() {
   const filterOffer = dataOffer.filter((item) => {
     const searchMatch =
       !searchQuery ||
-      (item.candidate && Object.values(item.candidate).some((name) =>
-        name?.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
+      (item.candidate &&
+        Object.values(item.candidate).some((name) =>
+          name?.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
 
-    const statusMatch =
-      !status || item.offerStatus?.includes(status);
+    const statusMatch = !status || item.offerStatus?.includes(status);
 
     const departmentMatch =
       !department ||
@@ -67,11 +66,14 @@ export default function Offer() {
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const displayOffers = filterOffer.slice(startIndex, startIndex + itemsPerPage);
+  const displayOffers = filterOffer.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   return (
     <div className="App">
-      <h5 className="offer-subtitle" >Offer List</h5>
+      <h5>Offer List</h5>
       <Row>
         <SearchOffer onSearch={handleSearch} />
       </Row>
@@ -84,6 +86,7 @@ export default function Offer() {
             filterOffer={displayOffers}
             candidate={candidate}
             dataOffer={dataOffer}
+            currentPage={currentPage}
           />
           <Pagination
             currentPage={currentPage}

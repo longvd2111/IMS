@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Row } from "react-bootstrap";
+import React, { Suspense, useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import SearchInterview from "./SearchInterview";
 import InterviewTable from "./InterviewTable";
@@ -12,10 +11,11 @@ export default function Interview() {
   const { user } = useContext(AuthContext);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [dataInterviews, setdataInterviews] = useState([]);
+  const [dataInterviews, setDataInterviews] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedStatus, setselectedStatus] = useState(0);
   const [selectedRecruiter, setSelectedRecruiter] = useState("");
+  const role = userRole.find((r) => r.value === user?.role)?.value;
 
   const handleSearch = (searchText, selectedStatus, selectedRecruiter) => {
     setSearchText(searchText);
@@ -27,7 +27,7 @@ export default function Interview() {
   const getInterviews = async (index, pageSize) => {
     let res = await fetchInterview(index, pageSize);
     if (res && res.data) {
-      setdataInterviews(res.data);
+      setDataInterviews(res.data);
       setTotalItems(res.data.length % PAGE_SIZE);
     }
   };
@@ -45,7 +45,7 @@ export default function Interview() {
   ) => {
     let filtered = dataInterviews;
 
-    if (searchText != "") {
+    if (searchText !== "") {
       filtered = filtered.filter(
         (item) =>
           item.title.toLowerCase().includes(searchText?.toLowerCase()) ||
@@ -55,7 +55,7 @@ export default function Interview() {
           item.recruiterDTO.name
             ?.toLowerCase()
             .includes(searchText?.toLowerCase()) ||
-          item.position.toLowerCase().includes(searchText?.toLowerCase())
+          item.jobDTO?.name.toLowerCase().includes(searchText?.toLowerCase())
       );
     }
 
@@ -71,10 +71,14 @@ export default function Interview() {
     } else {
       filtered = filtered;
     }
+
+    filtered.sort((a, b) => b.id - a.id);
+
     const startIndex = currentPage * PAGE_SIZE;
     if (filtered.length != totalItems) {
       setTotalItems(filtered.length);
     }
+
     return filtered.slice(startIndex, startIndex + PAGE_SIZE);
   };
 
@@ -91,22 +95,30 @@ export default function Interview() {
 
   return (
     <div className="interview-page">
-      <div className="interview-page_navigate">Interview List</div>
+      <div className="candidate-title">
+        <div className="breadcrumb__group">
+          <span className="breadcrumb-link ">Interview List</span>
+        </div>
+      </div>
 
       <div className="interview-page_search">
         <SearchInterview onSearch={handleSearch} />
       </div>
-      {user && user.role !== userRole.ROLE_INTERVIEWER && (
-        <div className="interview-page_link" style={{ marginBottom: "16px" }}>
-          <Link className="button-form" to={`/interview/add`}>
+      {role !== "ROLE_INTERVIEWER" && (
+        <div className="interview-page_link" style={{ marginBottom: "8px" }}>
+          <Link
+            className="button-form button-form--success"
+            to={`/interview/add`}
+          >
             Add new
           </Link>
         </div>
       )}
 
-      <div className="interview-page_table">
-        <InterviewTable dataInterviews={filteredInterviews} />
+      <div>
+        <InterviewTable dataInterviews={filteredInterviews} role={role} />
       </div>
+
       <Pagination
         currentPage={currentPage + 1}
         totalItems={Math.ceil(totalItems / PAGE_SIZE)}

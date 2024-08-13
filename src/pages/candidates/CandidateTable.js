@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { FaEye } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { BiEdit } from "react-icons/bi";
@@ -8,6 +8,9 @@ import { CandidatePosition, CandidateStatus } from '~/data/Constants';
 import SearchCandidate from '~/pages/candidates/SearchCandidate';
 import Pagination from '~/components/common/Pagination';
 import ConfirmModal from '~/components/common/ConfirmDelCandidate';
+import { AuthContext } from '~/contexts/auth/AuthContext';
+import { toast } from 'react-toastify';
+import debounce from 'lodash/debounce'; // Import debounce from lodash
 
 const CandidateTable = () => {
   const navigate = useNavigate();
@@ -18,7 +21,7 @@ const CandidateTable = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState(null);
   const itemsPerPage = 10;
-  const userRole = JSON.parse(localStorage.getItem('user'))?.role;
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const getCandidates = async () => {
@@ -27,7 +30,6 @@ const CandidateTable = () => {
         let res = await fetchAllCandidate();
         if (res && res.data) {
           setAllCandidates(res.data);
-          console.log("All Candidates:", res.data);
           setFilteredCandidates(res.data);
         }
       } catch (error) {
@@ -39,26 +41,32 @@ const CandidateTable = () => {
 
     getCandidates();
   }, []);
-  console.log("Filtered Candidates:", allCandidates);
+
+  // Debounced search function to avoid spamming
+  const debouncedSearch = useCallback(
+    debounce((query, status) => {
+      const filtered = allCandidates.filter(candidate => {
+        const matchesName = candidate.fullName.toLowerCase().includes(query.toLowerCase());
+        const matchesEmail = candidate.email.toLowerCase().includes(query.toLowerCase());
+        const matchesPhone = candidate.phone.includes(query);
+        const matchesPosition = candidate.candidatePosition.toLowerCase().includes(query.toLowerCase());
+        const matchesOwnerHR = candidate.recruiter.toLowerCase().includes(query.toLowerCase());
+        const matchesStatus = status === '' || candidate.candidateStatus === status;
+
+        return (matchesName || matchesEmail || matchesPhone || matchesPosition || matchesOwnerHR) && matchesStatus;
+      });
+
+      setFilteredCandidates(filtered);
+      setCurrentPage(1); // Reset to first page on search
+    }, 300), // 1000ms debounce delay
+    [allCandidates]
+  );
 
   const handleSearch = (query, status) => {
-    const filtered = allCandidates.filter(candidate => {
-      const matchesName = candidate.fullName.toLowerCase().includes(query.toLowerCase());
-      const matchesEmail = candidate.email.toLowerCase().includes(query.toLowerCase());
-      const matchesPhone = candidate.phone.includes(query);
-      const matchesPosition = candidate.candidatePosition.toLowerCase().includes(query.toLowerCase());
-      const matchesOwnerHR = candidate.recruiter.toLowerCase().includes(query.toLowerCase());
-      const matchesStatus = status === '' || candidate.candidateStatus === status;
-
-      return (matchesName || matchesEmail || matchesPhone || matchesPosition || matchesOwnerHR) && matchesStatus;
-    });
-
-    setFilteredCandidates(filtered);
-    setCurrentPage(1); // Reset to first page on search
+    debouncedSearch(query, status);
   };
 
   const handleDelete = async () => {
-    console.log("Candidate to delete:", candidateToDelete);
     if (candidateToDelete) {
       try {
         await deleteCandidate(candidateToDelete.id);
@@ -66,14 +74,11 @@ const CandidateTable = () => {
         setFilteredCandidates(filteredCandidates.filter(candidate => candidate.id !== candidateToDelete.id));
         setShowConfirmModal(false);
         setCandidateToDelete(null);
+        toast.success("Delete candidate Successful!");
       } catch (error) {
         console.error("Error deleting candidate:", error);
+        toast.error("Delete candidate Successful!");
       }
-    }
-  };
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
     }
   };
 
@@ -84,16 +89,17 @@ const CandidateTable = () => {
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
+  filteredCandidates.sort((a,b)=> b.id - a.id);
   const displayCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <>
-      <div style={{ marginBottom: '20px' }}>
-      <SearchCandidate onSearch={handleSearch} style={{ margin: '0px 0px 0px 0px' }} />
+      <div style={{ marginBottom: '20px',marginTop:"20px" }}>
+        <SearchCandidate onSearch={handleSearch} style={{ margin: '0px 0px 0px 0px' }} />
       </div>
-      {(userRole === 'ROLE_ADMIN' ||userRole ==='ROLE_MANAGER' ||userRole === 'ROLE_RECRUITER') && (
+      {(user.role === 'ROLE_ADMIN' || user.role === 'ROLE_MANAGER' || user.role === 'ROLE_RECRUITER') && (
         <div className="candidate-button" style={{ marginBottom: '20px' }} >
-          <Link className="button-form" to="/candidate/add">
+          <Link className="button-form button-form--success" to="/candidate/add">
             Add new
           </Link>
         </div>
@@ -126,11 +132,14 @@ const CandidateTable = () => {
                     <td>{CandidateStatus[candidate.candidateStatus]}</td>
                     <td>
                       <FaEye className='action--icon' onClick={() => navigate(`/candidate/${candidate.id}`)} style={{ cursor: 'pointer' }} />
-                      {(userRole === 'ROLE_ADMIN' ||userRole ==='ROLE_MANAGER' ||userRole === 'ROLE_RECRUITER') && (
+                      {(user.role === 'ROLE_ADMIN' || user.role === 'ROLE_MANAGER' || user.role === 'ROLE_RECRUITER') && (
                         <>
-                          <BiEdit className='action--icon' onClick={() => navigate(`/candidate/edit/${candidate.id}`)} style={{ cursor: 'pointer' }} />
-                          <RiDeleteBin6Line className='action--icon' onClick={() => { setShowConfirmModal(true); setCandidateToDelete(candidate); }} style={{ cursor: 'pointer' }} />
+                          <BiEdit data-testid={`edit-icon-${candidate.id}`} className='action--icon' onClick={() => navigate(`/candidate/edit/${candidate.id}`)} style={{ cursor: 'pointer' }} />
+                          {candidate.candidateStatus === "OPEN"  && (
+                            <RiDeleteBin6Line data-testid={`delete-icon-${candidate.id}`} className='action--icon' onClick={() => { setShowConfirmModal(true); setCandidateToDelete(candidate); }} style={{ cursor: 'pointer' }} />
+                          )}
                         </>
+
                       )}
                     </td>
                   </tr>

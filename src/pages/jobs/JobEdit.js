@@ -6,6 +6,8 @@ import Select from "react-select";
 import "../../assets/css/job-css/JobForm.css";
 import { fetchJobsById, updateJob } from "~/services/jobApi";
 import { toast } from "react-toastify";
+import "../../assets/css/interview-css/Interview.css";
+
 
 const optionsBenefits = [
   { value: 1, label: "Lunch" },
@@ -65,7 +67,6 @@ const JobEdit = () => {
         const res = await fetchJobsById(id);
         if (res) {
           const jobdata = res;
-
           const formattedStartDate = jobdata.startDate
             ? new Date(jobdata.startDate).toISOString().split("T")[0]
             : "";
@@ -96,7 +97,9 @@ const JobEdit = () => {
               ? optionsLevel.find((option) => option.value === jobdata.jobLevel)
               : null,
             jobStatus: jobdata.jobStatus
-              ? optionsStatus.find((option) => option.value === jobdata.jobStatus)
+              ? optionsStatus.find(
+                  (option) => option.value === jobdata.jobStatus
+                )
               : null,
             description: jobdata.description || "",
           });
@@ -112,59 +115,65 @@ const JobEdit = () => {
     getJobById();
   }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
+  const handleSelectChange = (selected, name) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: selected || [],
     }));
   };
 
-  const handleSelectChange = (selected, name) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: selected,
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
     }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
+  
     if (!formData.jobTitle) newErrors.jobTitle = "Job Title is required";
     if (!formData.skillIds || formData.skillIds.length === 0)
       newErrors.skillIds = "Skills are required";
     if (!formData.startDate) newErrors.startDate = "Start Date is required";
     if (!formData.endDate) newErrors.endDate = "End Date is required";
-
+  
     const startDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
     const currentDate = new Date();
-
+  
     if (startDate <= currentDate) {
       newErrors.startDate = "Start date must be later than current date";
     }
-
+  
     if (endDate <= startDate) {
       newErrors.endDate = "End date must be later than Start date";
     }
-    if (Number(formData.salaryFrom) >= Number(formData.salaryTo)) {
-      newErrors.salaryRange = "Salary From must be less than Salary To";
-    }
-    if (!formData.salaryFrom) newErrors.salaryFrom = "Salary From is required";
-    if (!formData.salaryTo) newErrors.salaryTo = "Salary To is required";
-
-    if (!formData.workingAddress)
-      newErrors.workingAddress = "Working Address is required";
-    if (!formData.description) newErrors.description = "Description is required";
+  
+    // Removed salary range validation as it is now optional
+  
+    // if (!formData.salaryFrom) newErrors.salaryFrom = "Salary From is required";
+    // if (!formData.salaryTo) newErrors.salaryTo = "Salary To is required";
+  
+    // Removed working address validation as it is now optional
+    // if (!formData.workingAddress)
+    //   newErrors.workingAddress = "Working Address is required";
+  
+    // Removed description validation as it is now optional
+    // if (!formData.description)
+    //   newErrors.description = "Description is required";
+  
     if (!formData.benefitIds || formData.benefitIds.length === 0)
       newErrors.benefitIds = "At least one Benefit is required";
     if (!formData.jobLevel) newErrors.jobLevel = "At least one Level is required";
-
+  
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -185,18 +194,19 @@ const JobEdit = () => {
       jobStatus: formData.jobStatus ? formData.jobStatus.value : null,
       description: formData.description,
     };
-      console.log(payload);
-    updateJob(payload)
-      .then((response) => {
-        toast.success("Job updated successfully!");
-        navigate("/job");
-      })
-      .catch((error) => {
-        console.error("Error updating Job!", error);
-        console.error("Error response:", error.response);
-        toast.error("Error updating Job. Please try again.");
-      });
+
+    console.log("update: ", payload);
+    try {
+      await updateJob(payload);
+      toast.success("Job updated successfully!");
+      navigate("/job");
+    } catch (error) {
+      console.error("Error updating Job!", error);
+      console.error("Error response:", error.response);
+      toast.error("Error updating Job. Please try again.");
+    }
   };
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const dayAfterTomorrow = new Date(tomorrow);
@@ -207,9 +217,8 @@ const JobEdit = () => {
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <div>Error loading job. Please try again later.</div>;
   }
-
   return (
     <Container className="mb-3">
       <div className="breadcrumb__group">
@@ -221,19 +230,23 @@ const JobEdit = () => {
       </div>
       <Row className="info-update">
         <Col xs={{ span: 6, offset: 8 }}>
-          <p style={{display:"none"}}>Create on 26/06/2024, Last update by MaiNT47, Today</p>
+          <p style={{ display: "none" }}>
+            Create on 26/06/2024, Last update by MaiNT47, Today
+          </p>
         </Col>
       </Row>
-      <div className="content-job-form">
+      
+      <div className="candidate-detail">
         <Row>
           <Form onSubmit={handleSubmit}>
+          <div className="content-job-form">
             <Row>
               <Col xs={6}>
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Job Title <span style={{color:"red"}}>*</span>
+                    Job Title <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Form.Control
                       type="text"
                       name="jobTitle"
@@ -250,9 +263,9 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Skill <span style={{color:"red"}}>*</span>
+                    Skill <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Select
                       isMulti
                       name="skillIds"
@@ -276,9 +289,9 @@ const JobEdit = () => {
               <Col xs={6}>
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Start Date <span style={{color:"red"}}>*</span>
+                    Start Date <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Form.Control
                       type="date"
                       name="startDate"
@@ -296,15 +309,21 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    End Date <span style={{color:"red"}}>*</span>
+                    End Date <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Form.Control
                       type="date"
                       name="endDate"
                       value={formData.endDate}
                       onChange={handleChange}
-                      min={formData.startDate ? new Date(formData.startDate).toISOString().split("T")[0] : dayAfterTomorrow.toISOString().split("T")[0]}
+                      min={
+                        formData.startDate
+                          ? new Date(formData.startDate)
+                              .toISOString()
+                              .split("T")[0]
+                          : dayAfterTomorrow.toISOString().split("T")[0]
+                      }
                       isInvalid={!!errors.endDate}
                     />
                     <Form.Control.Feedback type="invalid">
@@ -318,29 +337,31 @@ const JobEdit = () => {
               <Col xs={6}>
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Salary Range <span style={{color:"red"}}>*</span>
+                    Salary Range 
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Row>
                       <Col sm={2}>From</Col>
                       <Col sm={4}>
                         <Form.Control
                           style={{ width: "105px", fontSize: "14px" }}
-                          type="text"
+                          type="number"
                           name="salaryFrom"
                           value={formData.salaryFrom}
                           onChange={handleChange}
-                          isInvalid={!!errors.salaryFrom || !!errors.salaryRange}
+                          isInvalid={
+                            !!errors.salaryFrom || !!errors.salaryRange
+                          }
                         />
                         <Form.Control.Feedback type="invalid">
                           {errors.salaryFrom || errors.salaryRange}
                         </Form.Control.Feedback>
                       </Col>
-                      <Col sm={1}>To</Col>
-                      <Col sm={5}>
+                      <Col sm={2}>To</Col>
+                      <Col sm={4}>
                         <Form.Control
                           style={{ width: "110px", fontSize: "14px" }}
-                          type="text"
+                          type="number"
                           name="salaryTo"
                           value={formData.salaryTo}
                           onChange={handleChange}
@@ -357,10 +378,10 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Benefits <span style={{color:"red"}}>*</span>
+                    Benefits <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
-                  <Select
+                  <Col sm={9}>
+                    <Select
                       isMulti
                       name="benefitIds"
                       options={optionsBenefits}
@@ -382,10 +403,10 @@ const JobEdit = () => {
             <Row>
               <Col xs={6}>
                 <Form.Group as={Row}>
-                  <Form.Label style={{display:"flex"}} column sm={3}>
-                    Working Address <span style={{color:"red"}}>*</span>
+                  <Form.Label style={{ display: "flex" }} column sm={3}>
+                    Working Address 
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Form.Control
                       type="text"
                       name="workingAddress"
@@ -402,9 +423,9 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Level <span style={{color:"red"}}>*</span>
+                    Level <span style={{ color: "red" }}>*</span>
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Select
                       name="jobLevel"
                       options={optionsLevel}
@@ -427,12 +448,13 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Status <span style={{color:"red"}}>*</span>
+                    Status 
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Select
                       name="jobStatus"
                       options={optionsStatus}
+                      // isDisabled
                       value={formData.jobStatus}
                       onChange={(selected) =>
                         handleSelectChange(selected, "jobStatus")
@@ -445,9 +467,9 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Description <span style={{color:"red"}}>*</span>
+                    Description 
                   </Form.Label>
-                  <Col sm={7}>
+                  <Col sm={9}>
                     <Form.Control
                       as="textarea"
                       name="description"
@@ -462,23 +484,23 @@ const JobEdit = () => {
                 </Form.Group>
               </Col>
             </Row>
-            <Row>
-              <div className="button-job">
-                <button type="submit" className="button-submit">
+            </div>
+              <div className="button-group">
+                <button type="submit" className="button-form button-form--primary">
                   Save
                 </button>
                 <button
                   type="button"
-                  className="button-submit"
+                  className="button-form"
                   onClick={() => navigate("/job")}
                 >
                   Cancel
                 </button>
               </div>
-            </Row>
+
           </Form>
         </Row>
-      </div>
+        </div>
     </Container>
   );
 };

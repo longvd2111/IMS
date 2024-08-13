@@ -31,7 +31,7 @@ html {
 
 /* Base styles for table */
 .table {
-    margin: 5px 0;
+    margin: 10px 0;
     max-width: 100%;
     border-collapse: collapse;
     font-size: 0.8rem;
@@ -96,19 +96,20 @@ html {
 /* button */
 
 .button-group {
+    margin-top: 16px;
     display: flex;
-
+    justify-content: center;
 }
 
 .button-form {
-    background-color: #d9d9d9;
+    background-color: #6c757d;
     min-width: 100px;
     height: 34px;
     text-decoration: none;
     border: 0;
-    border-radius: 2px;
+    border-radius: 5px;
     cursor: pointer;
-    color: var(--text-color);
+    color: var(--white-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -118,8 +119,13 @@ html {
     margin: 0 16px;
 }
 
-.button-form:active {
-    background-color: (--primary-color);
+.button-form.active {
+    background-color: #007bff;
+    color: var(--white-color);
+}
+
+.button-form.active:hover {
+    background-color: #0056b3;
     color: var(--white-color);
 }
 
@@ -128,30 +134,52 @@ html {
 }
 
 .button-form:hover {
-    background-color: #c0c0c0;
+    background-color: #5C636A;
     text-decoration: none;
 }
 
 .button-form.button-form--success {
-    background-color: #ACECAB;
+    background-color: #28a745;
+}
+
+.button-form.button-form--success:hover {
+    background-color: #157347;
+
 }
 
 .button-form.button-form--danger {
-    background-color: #F3A0A0;
+    background-color: #dc3545;
+}
+
+.button-form.button-form--danger:hover {
+    background-color: #BB2D3B;
 }
 
 .button-form.button-form--primary {
-    background-color: #B0CDFA;
+    background-color: #007bff;
+}
+
+.button-form.button-form--primary:hover {
+    background-color: #0B5ED7;
 }
 
 .button-form.button-form--warning {
-    background-color: #FAD3B0;
+    background-color: #ffc107;
+    color: (var(--black-color));
+}
+
+.button-form.button-form--warning:hover {
+    background-color: #FFCA2C;
+    color: (var(--black-color));
+
 }
 
 /*--------------------------*/
 /* NavLink */
 .breadcrumb__group {
-    margin-top: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+
     display: flex;
     align-items: center;
     font-size: 1.2rem;

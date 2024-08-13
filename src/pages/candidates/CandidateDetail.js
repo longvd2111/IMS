@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "../../assets/css/candidate-css/CandidateDetail.css";
-import { FaAngleRight } from "react-icons/fa6";
+import { FaAngleRight } from "react-icons/fa";
 import { Row, Col } from "react-bootstrap";
 import { fetchCandidateById, updateCandidate } from "~/services/candidateApi";
 import { fetchAllUser } from "~/services/userServices";
@@ -10,9 +9,13 @@ import {
   CandidateLevel,
   CandidatePosition,
   CandidateStatus,
+  optionsSkills,
 } from "~/data/Constants";
 import { toast } from "react-toastify";
-import { optionsSkills } from "~/data/Constants";
+import { AuthContext } from "~/contexts/auth/AuthContext";
+import ConfirmModal from "~/components/common/ConfirmBanCandidate";
+import "../../assets/css/candidate-css/CandidateDetail.css";
+import { getSkillIds } from "~/utils/Validate";
 
 const CandidateDetail = () => {
   const { id } = useParams();
@@ -21,17 +24,15 @@ const CandidateDetail = () => {
   const [recruiters, setRecruiters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useContext(AuthContext);
+  const [showBanModal, setShowBanModal] = useState(false);
 
   useEffect(() => {
     const getCandidateById = async () => {
       try {
-        let res = await fetchCandidateById(id);
-        console.log("API response:", res);
+        const res = await fetchCandidateById(id);
         if (res) {
-          const candidate = res;
-          console.log("Selected Candidate:", candidate);
-          setCandidate(candidate);
-          console.log("asdasd", candidate);
+          setCandidate(res);
         }
         setLoading(false);
       } catch (error) {
@@ -44,16 +45,16 @@ const CandidateDetail = () => {
     fetchAllUser(0, 1000)
       .then((response) => {
         const users = response.data;
-        const recruiters = users
+        const recruitersList = users
           .filter((user) => user.userRole === "ROLE_RECRUITER")
           .map((user) => ({
             value: user.id,
             label: user.fullName,
           }));
-        setRecruiters(recruiters);
+        setRecruiters(recruitersList);
       })
       .catch((error) => {
-        console.error("lỗi user rồi", error);
+        console.error("Error fetching users:", error);
         toast.error("Error fetching users. Please try again.");
       });
 
@@ -62,6 +63,7 @@ const CandidateDetail = () => {
 
   const handleBanCandidate = async () => {
     try {
+      // Find recruiter by label
       const recruiter = recruiters.find(
         (user) => user.label === candidate.recruiter
       );
@@ -69,20 +71,21 @@ const CandidateDetail = () => {
         throw new Error("Recruiter not found");
       }
 
-      // Convert skills array to array of integers directly
-      const skillIds = candidate.skills
-        .map((skill) => {
-          const skillOption = optionsSkills.find(
-            (option) => option.label.toLowerCase() === skill.toLowerCase()
-          );
-          return skillOption ? skillOption.value : null;
-        })
-        .filter((value) => value !== null);
+      // Map skills to skill IDs
+      // const skillIds = (candidate.skills || [])
+      //   .map((skill) => {
+      //     const skillOption = optionsSkills.find(
+      //       (option) => option.label.toLowerCase() === skill.toLowerCase()
+      //     );
+      //     return skillOption ? skillOption.value : null;
+      //   })
+      //   .filter((value) => value !== null);
 
-      console.log("skillIds:", skillIds); // Log skillIds for verification
+      const skillIds = getSkillIds(candidate?.skills || [], optionsSkills);
 
+      // Prepare updated candidate object
       const updatedCandidate = {
-        id: id,
+        id: candidate.id,
         candidateStatus: "BANNED",
         recruiterId: recruiter.value,
         address: candidate.address,
@@ -97,9 +100,11 @@ const CandidateDetail = () => {
         highestLevel: candidate.highestLevel,
         note: candidate.note,
         skillIds: skillIds,
-        phone: candidate.phone
+        phone: candidate.phone,
+        yearExperience: candidate.yearExperience,
       };
 
+      // Update the candidate
       await updateCandidate(updatedCandidate);
       toast.success("Candidate has been banned successfully");
       navigate(`/candidate`);
@@ -109,18 +114,17 @@ const CandidateDetail = () => {
     }
   };
 
+  const formatDate = (dob) => {
+    const date = new Date(dob);
+    return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(
+      date.getDate()
+    ).padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error)
     return <div>There was an error loading the candidate details.</div>;
   if (!candidate) return <div>Candidate not found</div>;
-
-  const formatDate = (dobArray) => {
-    const [year, month, day] = dobArray;
-
-    const formattedDay = String(day).padStart(2, "0");
-    const formattedMonth = String(month).padStart(2, "0");
-    return `${formattedMonth}/${formattedDay}/${year}`;
-  };
 
   return (
     <div className="candidate-detail-container">
@@ -136,15 +140,20 @@ const CandidateDetail = () => {
           <span className="breadcrumb-link__active">Candidate Information</span>
         </div>
       </div>
-
-      <div className="candidate-ban">
-        <button
-          className="button-form button-form--danger"
-          onClick={handleBanCandidate}
-        >
-          Ban Candidate
-        </button>
-      </div>
+      {(user.role === "ROLE_ADMIN" ||
+        user.role === "ROLE_MANAGER" ||
+        user.role === "ROLE_RECRUITER") &&
+        candidate.candidateStatus === "OPEN" && (
+          <div className="candidate-ban">
+            <button
+              className="button-form button-form--danger"
+              onClick={() => setShowBanModal(true)}
+              style={{ cursor: "pointer" }}
+            >
+              Ban Candidate
+            </button>
+          </div>
+        )}
 
       <div className="candidate-detail">
         <div className="section">
@@ -152,8 +161,8 @@ const CandidateDetail = () => {
             <h5>I. Personal information</h5>
             <Row>
               <Col>
-                <p>
-                  <strong>Full name:</strong> {candidate.fullName}
+                <p data-testid="fullName">
+                  <strong>Full name: </strong> {candidate.fullName}
                 </p>
                 <p>
                   <strong>D.O.B:</strong> {formatDate(candidate.dob)}
@@ -169,8 +178,8 @@ const CandidateDetail = () => {
                 <p>
                   <strong>Address:</strong> {candidate.address}
                 </p>
-                <p>
-                  <strong>Gender:</strong> {CandidateGender[candidate.gender]}
+                <p data-testid="gender">
+                  <strong>Gender: </strong> {CandidateGender[candidate.gender]}
                 </p>
               </Col>
             </Row>
@@ -204,16 +213,16 @@ const CandidateDetail = () => {
                 </p>
               </Col>
               <Col>
-                <p>
-                  <strong>Status:</strong>{" "}
+                <p data-testid="status">
+                  <strong>Status: </strong>{" "}
                   {CandidateStatus[candidate.candidateStatus]}
                 </p>
                 <p>
                   <strong>Year of Experience:</strong>{" "}
                   {candidate.yearExperience}
                 </p>
-                <p>
-                  <strong>Highest level:</strong>{" "}
+                <p data-testid="level">
+                  <strong>Highest level: </strong>{" "}
                   {CandidateLevel[candidate.highestLevel]}
                 </p>
                 <p>
@@ -224,17 +233,29 @@ const CandidateDetail = () => {
           </div>
         </div>
         <div className="actions">
-          <button
-            className="button-form"
-            onClick={() => navigate(`/candidate/edit/${candidate.id}`)}
-          >
-            Edit
-          </button>
+          {(user.role === "ROLE_ADMIN" ||
+            user.role === "ROLE_MANAGER" ||
+            user.role === "ROLE_RECRUITER") && (
+            <button
+              className="button-form button-form--warning"
+              onClick={() => navigate(`/candidate/edit/${candidate.id}`)}
+            >
+              Edit
+            </button>
+          )}
           <button className="button-form" onClick={() => navigate(-1)}>
             Cancel
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        show={showBanModal}
+        handleClose={() => setShowBanModal(false)}
+        handleConfirm={handleBanCandidate}
+        title="Confirm Ban"
+        body="Are you sure you want to ban this candidate?"
+      />
     </div>
   );
 };
