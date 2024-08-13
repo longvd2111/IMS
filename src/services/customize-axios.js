@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "https://ims-pjb03.ddns.net:8080/",
+  baseURL: "http://ims-pjb03.ddns.net:8080/",
   // baseURL: "http://localhost:8080/",
 });
 
