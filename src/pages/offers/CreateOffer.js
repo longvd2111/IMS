@@ -717,7 +717,7 @@ export default function CreateOffer() {
                 <Col xs={6} className="mb-3">
                   <Form.Group as={Row}>
                     <Form.Label column sm={3} htmlFor="basicSalary">
-                      <strong>Basic Salary:</strong>
+                      <strong>Basic Salary($):</strong>
                       <span style={{ color: "red" }}>*</span>
                     </Form.Label>
                     <Col sm={9}>

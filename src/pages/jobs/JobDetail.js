@@ -161,7 +161,11 @@ export default function JobDetail() {
                 <Row>
                   <Col xs={6}>
                     <Form.Group as={Row}>
-                      <Form.Label column sm={3}>
+                      <Form.Label
+                        column
+                        sm={3}
+                        style={{ paddingBottom: "10px" }}
+                      >
                         <strong>Salary Range:</strong>
                       </Form.Label>
                       <Col sm={9}>
@@ -169,11 +173,11 @@ export default function JobDetail() {
                           <Col sm={2}>
                             <strong>From</strong>
                           </Col>
-                          <Col sm={4}>{job.salaryFrom} VND</Col>
+                          <Col sm={4}>{job.salaryFrom}$</Col>
                           <Col sm={2}>
                             <strong>To</strong>
                           </Col>
-                          <Col sm={4}>{job.salaryTo} VND</Col>
+                          <Col sm={4}>{job.salaryTo}$</Col>
                         </Row>
                       </Col>
                     </Form.Group>

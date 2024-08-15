@@ -83,11 +83,13 @@ export default function JobsList() {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteJobs(modalJob.id);
-      const updatedJobs = jobs.filter((item) => item.id !== modalJob.id);
-      setJobs(updatedJobs);
-      setFilteredJobs(updatedJobs);
-      toast.success(getMessage("ME019"));
+      const res = await deleteJobs(modalJob.id);
+      if (res) {
+        const updatedJobs = jobs.filter((item) => item.id !== modalJob.id);
+        setJobs(updatedJobs);
+        setFilteredJobs(updatedJobs);
+        toast.success(getMessage("ME019"));
+      }
     } catch (error) {
       toast.error(getMessage("ME020"));
     } finally {

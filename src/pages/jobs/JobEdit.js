@@ -326,7 +326,7 @@ const JobEdit = () => {
               <Col xs={6}>
                 <Form.Group as={Row} className="align-items-center">
                   <Col sm={3} style={{ paddingBottom: "10px" }}>
-                    Salary Range
+                    Salary Range($)
                   </Col>
                   <Col sm={9}>
                     <Row>

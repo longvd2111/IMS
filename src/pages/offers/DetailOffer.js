@@ -412,7 +412,7 @@ const DetailOffer = () => {
                         detailOffer.basicSalary !== null
                           ? detailOffer.basicSalary.toLocaleString("vi-VN")
                           : "N/A"}{" "}
-                        VND
+                        $
                       </Form.FloatingLabel>
                     </Col>
                   </Form.Group>

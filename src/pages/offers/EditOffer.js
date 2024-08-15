@@ -464,7 +464,7 @@ const EditOffer = () => {
                 <Col xs={6} className="mb-3">
                   <Form.Group as={Row}>
                     <Form.Label column sm={3}>
-                      <strong> Recruiter Owner:</strong>{" "}
+                      <strong>Recruiter Owner:</strong>
                       <span style={{ color: "red" }}>*</span>
                     </Form.Label>
                     <Col sm={9}>
@@ -486,17 +486,6 @@ const EditOffer = () => {
                               </option>
                             ))}
                       </Form.Select>
-                      <Link
-                        className="text-assigned"
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            recruiterOwnerId: "currentUser",
-                          }))
-                        }
-                      >
-                        Assigned to me
-                      </Link>
                     </Col>
                   </Form.Group>
                 </Col>
@@ -587,7 +576,7 @@ const EditOffer = () => {
                 <Col xs={6} className="mb-3">
                   <Form.Group as={Row}>
                     <Form.Label column sm={3}>
-                      <strong>Basic Salary:</strong>{" "}
+                      <strong>Basic Salary($):</strong>{" "}
                       <span style={{ color: "red" }}>*</span>
                     </Form.Label>
                     <Col sm={9}>
