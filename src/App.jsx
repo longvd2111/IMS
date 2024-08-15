@@ -7,24 +7,22 @@ import { Bounce, ToastContainer } from "react-toastify";
 
 const App = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          transition={Bounce}
-        />
-      </AuthProvider>
-    </Suspense>
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
+    </AuthProvider>
   );
 };
 

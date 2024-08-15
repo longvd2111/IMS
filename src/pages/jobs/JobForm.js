@@ -244,7 +244,7 @@ export default function CreateForm() {
                   <Col xs={6}>
                     <Form.Group as={Row} className="align-items-center">
                       <Col sm={3} style={{ paddingBottom: "10px" }}>
-                        Salary Range
+                        Salary Range($)
                       </Col>
                       <Col sm={9}>
                         <Row>
@@ -265,7 +265,6 @@ export default function CreateForm() {
                               />
                             </Col>
                           </Col>
-
                           <Col sm={6} className="d-flex align-items-center">
                             <Col sm={4}>To</Col>
                             <Col sm={8}>

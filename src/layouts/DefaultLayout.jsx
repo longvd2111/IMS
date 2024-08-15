@@ -2,7 +2,7 @@
 import Header from "~/components/common/Header";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "~/components/common/Navbar";
-import { useContext, useState } from "react";
+import { Suspense, useContext, useState } from "react";
 import { AuthContext } from "~/contexts/auth/AuthContext";
 import { userRole } from "~/data/Constants";
 
@@ -35,7 +35,9 @@ function DefaultLayout() {
       <div className={`main-content ${isExpanded ? "expanded" : ""}`}>
         {shouldShowNavbar && <Header />}
         <div className="main-content__son">
-          <Outlet />
+          <Suspense fallback={<div>Loading content...</div>}>
+            <Outlet />
+          </Suspense>
         </div>
       </div>
     </div>
