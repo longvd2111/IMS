@@ -173,11 +173,11 @@ export default function JobDetail() {
                           <Col sm={2}>
                             <strong>From</strong>
                           </Col>
-                          <Col sm={4}>{job.salaryFrom}$</Col>
+                          <Col sm={4}>{job.salaryFrom} $</Col>
                           <Col sm={2}>
                             <strong>To</strong>
                           </Col>
-                          <Col sm={4}>{job.salaryTo}$</Col>
+                          <Col sm={4}>{job.salaryTo} $</Col>
                         </Row>
                       </Col>
                     </Form.Group>
