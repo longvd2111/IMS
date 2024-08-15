@@ -17,40 +17,25 @@ import {
 } from "~/data/Constants";
 import { isValidDOB, isValidEmail, isValidPhone } from "~/utils/Validate";
 import { toast } from "react-toastify";
+import { getMessage } from "~/data/Messages";
 
 const validationSchema = Yup.object().shape({
-  fullName: Yup.string().required("Full Name is required"),
+  fullName: Yup.string().required(getMessage("ME002")),
   email: Yup.string()
-    .email("Invalid email address")
-    .matches(
-      /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
-      "Email must be in the format name@gmail.com"
-    )
-    .required("Email is required"),
-  phone: Yup.string().test(
-    "is-valid-phone",
-    "Phone number must be exactly 10 numbers",
-    isValidPhone
-  ),
-  dob: Yup.string().test(
-    "is-valid-dob",
-    "Date of Birth must be in the past",
-    isValidDOB
-  ),
-  gender: Yup.object().nullable().required("Gender is required"),
-  yearExperience: Yup.number().min(
-    0,
-    "Year of Experience must be a positive number"
-  ),
-  candidatePosition: Yup.object()
-    .nullable()
-    .required("Current Position is required"),
-  highestLevel: Yup.object().nullable().required("Highest Level is required"),
+    .email(getMessage("ME009"))
+    .matches(/^[a-zA-Z0-9._%+-]+@gmail\.com$/, getMessage("ME028"))
+    .required(getMessage("ME002")),
+  phone: Yup.string().test("is-valid-phone", getMessage("ME029"), isValidPhone),
+  dob: Yup.string().test("is-valid-dob", getMessage("ME010"), isValidDOB),
+  gender: Yup.object().nullable().required(getMessage("ME002")),
+  yearExperience: Yup.number().min(0, getMessage("ME030")),
+  candidatePosition: Yup.object().nullable().required(getMessage("ME002")),
+  highestLevel: Yup.object().nullable().required(getMessage("ME002")),
   skillIds: Yup.array()
-    .min(1, "At least one skill is required")
-    .required("Skills are required"),
-  recruiterId: Yup.object().nullable().required("Recruiter is required"),
-  candidateStatus: Yup.object().nullable().required("Status is required"),
+    .min(1, getMessage("ME002"))
+    .required(getMessage("ME002")),
+  recruiterId: Yup.object().nullable().required(getMessage("ME002")),
+  candidateStatus: Yup.object().nullable().required(getMessage("ME002")),
 });
 
 export default function EditCandidate() {
@@ -63,67 +48,61 @@ export default function EditCandidate() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const userResponse = await fetchAllUser(0, 1000);
-        const users = userResponse.data;
-        const recruiterOptions = users
-          .filter((user) => user.userRole === "ROLE_RECRUITER")
-          .map((user) => ({
-            value: user.id,
-            label: user.fullName,
-          }));
-        setRecruiters(recruiterOptions);
+      const userResponse = await fetchAllUser(0, 1000);
+      const users = userResponse.data;
+      const recruiterOptions = users
+        .filter((user) => user.userRole === "ROLE_RECRUITER")
+        .map((user) => ({
+          value: user.id,
+          label: user.fullName,
+        }));
+      setRecruiters(recruiterOptions);
 
-        const candidateResponse = await fetchCandidateById(id);
-        const data = candidateResponse;
-        const formattedDob = data.dob
-          ? data.dob.map((part) => String(part).padStart(2, "0")).join("-")
-          : "";
+      const candidateResponse = await fetchCandidateById(id);
+      const data = candidateResponse;
+      const formattedDob = data.dob
+        ? data.dob.map((part) => String(part).padStart(2, "0")).join("-")
+        : "";
 
-        formik.setValues({
-          fullName: data.fullName || "",
-          email: data.email || "",
-          dob: formattedDob,
-          address: data.address || "",
-          phone: data.phone || "",
-          gender:
-            optionsGender.find(
-              (option) => option.value === data.gender.toUpperCase()
-            ) || null,
-          candidatePosition:
-            optionsPosition.find(
-              (option) => option.value === data.candidatePosition
-            ) || null,
-          highestLevel:
-            optionsLevel.find((option) => option.value === data.highestLevel) ||
-            null,
-          skillIds: data.skills
-            ? data.skills
-                .map((skill) => {
-                  const normalizedSkill = skill.trim().toLowerCase();
-                  const mappedSkill = skillMapping[normalizedSkill] || skill;
-                  return optionsSkills.find(
-                    (option) =>
-                      option.label.trim().toLowerCase() ===
-                      mappedSkill.trim().toLowerCase()
-                  );
-                })
-                .filter(Boolean)
-            : [],
-          recruiterId:
-            recruiterOptions.find(
-              (option) => option.label === data.recruiter
-            ) || null,
-          candidateStatus: optionsStatus.find(
-            (option) => option.value === data.candidateStatus
-          ),
-          attachFile: data.attachFile || "",
-          yearExperience: data.yearExperience || "",
-        });
-      } catch (error) {
-        console.error("There was an error fetching the data!", error);
-        alert("Error fetching data. Please try again.");
-      }
+      formik.setValues({
+        fullName: data.fullName || "",
+        email: data.email || "",
+        dob: formattedDob,
+        address: data.address || "",
+        phone: data.phone || "",
+        gender:
+          optionsGender.find(
+            (option) => option.value === data.gender.toUpperCase()
+          ) || null,
+        candidatePosition:
+          optionsPosition.find(
+            (option) => option.value === data.candidatePosition
+          ) || null,
+        highestLevel:
+          optionsLevel.find((option) => option.value === data.highestLevel) ||
+          null,
+        skillIds: data.skills
+          ? data.skills
+              .map((skill) => {
+                const normalizedSkill = skill.trim().toLowerCase();
+                const mappedSkill = skillMapping[normalizedSkill] || skill;
+                return optionsSkills.find(
+                  (option) =>
+                    option.label.trim().toLowerCase() ===
+                    mappedSkill.trim().toLowerCase()
+                );
+              })
+              .filter(Boolean)
+          : [],
+        recruiterId:
+          recruiterOptions.find((option) => option.label === data.recruiter) ||
+          null,
+        candidateStatus: optionsStatus.find(
+          (option) => option.value === data.candidateStatus
+        ),
+        attachFile: data.attachFile || "",
+        yearExperience: data.yearExperience || "",
+      });
     };
 
     fetchData();
@@ -161,13 +140,11 @@ export default function EditCandidate() {
 
       updateCandidate(payload)
         .then((response) => {
-          toast.success("Candidate updated successfully!");
+          toast.success(getMessage("ME014"));
           navigate("/candidate");
         })
         .catch((error) => {
-          console.error("Error updating candidate!", error);
-          console.error("Error response:", error.response);
-          toast.error("Error updating candidate. Please try again.");
+          toast.error(getMessage("ME013"));
         });
     },
   });
@@ -291,7 +268,7 @@ export default function EditCandidate() {
                 <Col xs={6}>
                   <Form.Group as={Row}>
                     <Form.Label column sm={3} data-testId="phone">
-                      Phone Number
+                      Phone Number <span style={{ color: "red" }}>*</span>
                     </Form.Label>
                     <Col sm={9}>
                       <Form.Control

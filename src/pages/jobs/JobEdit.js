@@ -7,7 +7,7 @@ import "../../assets/css/job-css/JobForm.css";
 import { fetchJobsById, updateJob } from "~/services/jobApi";
 import { toast } from "react-toastify";
 import "../../assets/css/interview-css/Interview.css";
-
+import { getMessage } from "~/data/Messages";
 
 const optionsBenefits = [
   { value: 1, label: "Lunch" },
@@ -132,42 +132,35 @@ const JobEdit = () => {
 
   const validateForm = () => {
     const newErrors = {};
-  
-    if (!formData.jobTitle) newErrors.jobTitle = "Job Title is required";
+
+    if (!formData.jobTitle) newErrors.jobTitle = getMessage("ME002");
     if (!formData.skillIds || formData.skillIds.length === 0)
-      newErrors.skillIds = "Skills are required";
-    if (!formData.startDate) newErrors.startDate = "Start Date is required";
-    if (!formData.endDate) newErrors.endDate = "End Date is required";
-  
+      newErrors.skillIds = getMessage("ME002");
+    if (!formData.startDate) newErrors.startDate = getMessage("ME002");
+    if (!formData.endDate) newErrors.endDate = getMessage("ME002");
+
     const startDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
     const currentDate = new Date();
-  
+
     if (startDate <= currentDate) {
-      newErrors.startDate = "Start date must be later than current date";
+      newErrors.startDate = getMessage("ME017");
     }
-  
+
     if (endDate <= startDate) {
-      newErrors.endDate = "End date must be later than Start date";
+      newErrors.endDate = getMessage("ME018");
     }
-  
-    // Removed salary range validation as it is now optional
-  
-    // if (!formData.salaryFrom) newErrors.salaryFrom = "Salary From is required";
-    // if (!formData.salaryTo) newErrors.salaryTo = "Salary To is required";
-  
-    // Removed working address validation as it is now optional
-    // if (!formData.workingAddress)
-    //   newErrors.workingAddress = "Working Address is required";
-  
-    // Removed description validation as it is now optional
-    // if (!formData.description)
-    //   newErrors.description = "Description is required";
-  
+
+    if (formData.salaryFrom && formData.salaryTo) {
+      if (formData.salaryTo <= formData.salaryFrom) {
+        newErrors.salaryTo = getMessage("ME040");
+      }
+    }
+
     if (!formData.benefitIds || formData.benefitIds.length === 0)
-      newErrors.benefitIds = "At least one Benefit is required";
-    if (!formData.jobLevel) newErrors.jobLevel = "At least one Level is required";
-  
+      newErrors.benefitIds = getMessage("ME002");
+    if (!formData.jobLevel) newErrors.jobLevel = getMessage("ME002");
+
     return newErrors;
   };
 
@@ -198,12 +191,10 @@ const JobEdit = () => {
     console.log("update: ", payload);
     try {
       await updateJob(payload);
-      toast.success("Job updated successfully!");
+      toast.success(getMessage("ME014"));
       navigate("/job");
     } catch (error) {
-      console.error("Error updating Job!", error);
-      console.error("Error response:", error.response);
-      toast.error("Error updating Job. Please try again.");
+      toast.error(getMessage("ME013"));
     }
   };
 
@@ -219,6 +210,7 @@ const JobEdit = () => {
   if (error) {
     return <div>Error loading job. Please try again later.</div>;
   }
+
   return (
     <Container className="mb-3">
       <div className="breadcrumb__group">
@@ -235,10 +227,9 @@ const JobEdit = () => {
           </p>
         </Col>
       </Row>
-      
+
       <div className="candidate-detail">
-        <Row>
-          <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit}>
           <div className="content-job-form">
             <Row>
               <Col xs={6}>
@@ -254,10 +245,10 @@ const JobEdit = () => {
                       onChange={handleChange}
                       isInvalid={!!errors.jobTitle}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.jobTitle}
-                    </Form.Control.Feedback>
                   </Col>
+                  {errors.jobTitle && (
+                    <div className="text-danger">{errors.jobTitle}</div>
+                  )}
                 </Form.Group>
               </Col>
               <Col xs={6} className="mb-3">
@@ -276,12 +267,10 @@ const JobEdit = () => {
                       }
                       className={errors.skillIds ? "is-invalid" : ""}
                     />
-                    {errors.skillIds && (
-                      <div className="invalid-feedback d-block">
-                        {errors.skillIds}
-                      </div>
-                    )}
                   </Col>
+                  {errors.skillIds && (
+                    <div className="text-danger">{errors.skillIds}</div>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -300,10 +289,10 @@ const JobEdit = () => {
                       onChange={handleChange}
                       isInvalid={!!errors.startDate}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.startDate}
-                    </Form.Control.Feedback>
                   </Col>
+                  {errors.startDate && (
+                    <div className="text-danger">{errors.startDate}</div>
+                  )}
                 </Form.Group>
               </Col>
               <Col xs={6} className="mb-3">
@@ -326,55 +315,68 @@ const JobEdit = () => {
                       }
                       isInvalid={!!errors.endDate}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.endDate}
-                    </Form.Control.Feedback>
                   </Col>
+                  {errors.endDate && (
+                    <div className="text-danger">{errors.endDate}</div>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
             <Row>
               <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Salary Range 
-                  </Form.Label>
+                <Form.Group as={Row} className="align-items-center">
+                  <Col sm={3} style={{ paddingBottom: "10px" }}>
+                    Salary Range
+                  </Col>
                   <Col sm={9}>
                     <Row>
-                      <Col sm={2}>From</Col>
-                      <Col sm={4}>
-                        <Form.Control
-                          style={{ width: "105px", fontSize: "14px" }}
-                          type="number"
-                          name="salaryFrom"
-                          value={formData.salaryFrom}
-                          onChange={handleChange}
-                          isInvalid={
-                            !!errors.salaryFrom || !!errors.salaryRange
-                          }
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.salaryFrom || errors.salaryRange}
-                        </Form.Control.Feedback>
+                      <Col sm={6} className="d-flex align-items-center">
+                        <Col sm={4}>From</Col>
+                        <Col sm={8}>
+                          <Form.Control
+                            style={{ width: "105px", fontSize: "14px" }}
+                            type="number"
+                            name="salaryFrom"
+                            value={formData.salaryFrom}
+                            onChange={handleChange}
+                            isInvalid={
+                              !!errors.salaryFrom || !!errors.salaryRange
+                            }
+                          />
+                        </Col>
                       </Col>
-                      <Col sm={2}>To</Col>
-                      <Col sm={4}>
-                        <Form.Control
-                          style={{ width: "110px", fontSize: "14px" }}
-                          type="number"
-                          name="salaryTo"
-                          value={formData.salaryTo}
-                          onChange={handleChange}
-                          isInvalid={!!errors.salaryTo || !!errors.salaryRange}
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {errors.salaryTo || errors.salaryRange}
-                        </Form.Control.Feedback>
+
+                      <Col sm={6} className="d-flex align-items-center">
+                        <Col sm={4}>To</Col>
+                        <Col sm={8}>
+                          <Form.Control
+                            style={{ width: "110px", fontSize: "14px" }}
+                            type="number"
+                            name="salaryTo"
+                            value={formData.salaryTo}
+                            onChange={handleChange}
+                            isInvalid={
+                              !!errors.salaryTo || !!errors.salaryRange
+                            }
+                          />
+                        </Col>
                       </Col>
                     </Row>
                   </Col>
+                  {errors.salaryRange && (
+                    <div className="text-danger">{errors.salaryRange}</div>
+                  )}
+
+                  {errors.salaryFrom && !errors.salaryRange && (
+                    <div className="text-danger">{errors.salaryFrom}</div>
+                  )}
+
+                  {errors.salaryTo && !errors.salaryRange && (
+                    <div className="text-danger">{errors.salaryTo}</div>
+                  )}
                 </Form.Group>
               </Col>
+
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
@@ -391,12 +393,10 @@ const JobEdit = () => {
                       }
                       className={errors.benefitIds ? "is-invalid" : ""}
                     />
-                    {errors.benefitIds && (
-                      <div className="invalid-feedback d-block">
-                        {errors.benefitIds}
-                      </div>
-                    )}
                   </Col>
+                  {errors.benefitIds && (
+                    <div className="text-danger">{errors.benefitIds}</div>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -404,7 +404,7 @@ const JobEdit = () => {
               <Col xs={6}>
                 <Form.Group as={Row}>
                   <Form.Label style={{ display: "flex" }} column sm={3}>
-                    Working Address 
+                    Working Address
                   </Form.Label>
                   <Col sm={9}>
                     <Form.Control
@@ -414,10 +414,10 @@ const JobEdit = () => {
                       onChange={handleChange}
                       isInvalid={!!errors.workingAddress}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.workingAddress}
-                    </Form.Control.Feedback>
                   </Col>
+                  {errors.workingAddress && (
+                    <div className="text-danger">{errors.workingAddress}</div>
+                  )}
                 </Form.Group>
               </Col>
               <Col xs={6} className="mb-3">
@@ -435,12 +435,10 @@ const JobEdit = () => {
                       }
                       className={errors.jobLevel ? "is-invalid" : ""}
                     />
-                    {errors.jobLevel && (
-                      <div className="invalid-feedback d-block">
-                        {errors.jobLevel}
-                      </div>
-                    )}
                   </Col>
+                  {errors.jobLevel && (
+                    <div className="text-danger">{errors.jobLevel}</div>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -448,7 +446,7 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Status 
+                    Status
                   </Form.Label>
                   <Col sm={9}>
                     <Select
@@ -467,7 +465,7 @@ const JobEdit = () => {
               <Col xs={6} className="mb-3">
                 <Form.Group as={Row}>
                   <Form.Label column sm={3}>
-                    Description 
+                    Description
                   </Form.Label>
                   <Col sm={9}>
                     <Form.Control
@@ -477,30 +475,28 @@ const JobEdit = () => {
                       onChange={handleChange}
                       isInvalid={!!errors.description}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.description}
-                    </Form.Control.Feedback>
                   </Col>
+                  {errors.description && (
+                    <div className="text-danger">{errors.description}</div>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
-            </div>
-              <div className="button-group">
-                <button type="submit" className="button-form button-form--primary">
-                  Save
-                </button>
-                <button
-                  type="button"
-                  className="button-form"
-                  onClick={() => navigate("/job")}
-                >
-                  Cancel
-                </button>
-              </div>
-
-          </Form>
-        </Row>
-        </div>
+          </div>
+          <div className="button-group">
+            <button type="submit" className="button-form button-form--primary">
+              Save
+            </button>
+            <button
+              type="button"
+              className="button-form"
+              onClick={() => navigate("/job")}
+            >
+              Cancel
+            </button>
+          </div>
+        </Form>
+      </div>
     </Container>
   );
 };

@@ -13,6 +13,7 @@ import {
 import { FaAngleRight } from "react-icons/fa";
 import ApiUser from "~/services/usersApi";
 import { toast } from "react-toastify";
+import { getMessage } from "~/data/Messages";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -34,25 +35,22 @@ const CreateUser = () => {
       fullName: Yup.string()
         .matches(
           /^[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*(\s[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*)+$/,
-          "Full name is not valid!"
+          getMessage("ME041")
         )
-        .required("Full name is required!"),
+        .required(getMessage("ME002")),
       email: Yup.string()
-        .email("Invalid email address")
-        .matches(
-          /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
-          "Email must be in the format name@gmail.com"
-        )
-        .required("Email is required"),
+        .email(getMessage("ME009"))
+        .matches(/^[a-zA-Z0-9._%+-]+@gmail\.com$/, getMessage("ME028"))
+        .required(getMessage("ME002")),
       dob: Yup.date()
-        .max(new Date(), "Date of Birth must be in the past!")
-        .required("Date of Birth is required!"),
+        .max(new Date(), getMessage("ME010"))
+        .required(getMessage("ME002")),
       phone: Yup.string()
-        .matches(/^[0-9]+$/, "Phone number must contain only digits")
-        .length(10, "Phone number must be exactly 10 digits"),
-      gender: Yup.string().required("Gender is required!"),
-      userRole: Yup.string().required("Role is required!"),
-      department: Yup.string().required("Department is required!"),
+        .matches(/^[0-9]+$/, getMessage("ME029"))
+        .length(10, getMessage("ME029")),
+      gender: Yup.string().required(getMessage("ME002")),
+      userRole: Yup.string().required(getMessage("ME002")),
+      department: Yup.string().required(getMessage("ME002")),
     }),
     onSubmit: async (values) => {
       const userData = {
@@ -72,9 +70,9 @@ const CreateUser = () => {
 
       if (res && res.success) {
         navigate("/user");
-        toast.success(res.message);
+        toast.success(getMessage("ME027"));
       } else {
-        toast.error(res.message);
+        toast.error(getMessage("ME026"));
       }
     },
   });
@@ -105,12 +103,12 @@ const CreateUser = () => {
                         placeholder="Type a name"
                         {...formik.getFieldProps("fullName")}
                       />
-                      {formik.touched.fullName && formik.errors.fullName ? (
-                        <div className="text-danger">
-                          {formik.errors.fullName}
-                        </div>
-                      ) : null}
                     </Col>
+                    {formik.touched.fullName && formik.errors.fullName ? (
+                      <div className="text-danger">
+                        {formik.errors.fullName}
+                      </div>
+                    ) : null}
                   </Form.Group>
                 </Col>
                 <Col xs={6} className="mb-3">
@@ -125,10 +123,10 @@ const CreateUser = () => {
                         placeholder="Type an email"
                         {...formik.getFieldProps("email")}
                       />
-                      {formik.touched.email && formik.errors.email ? (
-                        <div className="text-danger">{formik.errors.email}</div>
-                      ) : null}
                     </Col>
+                    {formik.touched.email && formik.errors.email ? (
+                      <div className="text-danger">{formik.errors.email}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
               </Row>
@@ -146,10 +144,10 @@ const CreateUser = () => {
                         name="dob"
                         {...formik.getFieldProps("dob")}
                       />
-                      {formik.touched.dob && formik.errors.dob ? (
-                        <div className="text-danger">{formik.errors.dob}</div>
-                      ) : null}
                     </Col>
+                    {formik.touched.dob && formik.errors.dob ? (
+                      <div className="text-danger">{formik.errors.dob}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
                 <Col xs={6} className="mb-3">
@@ -183,10 +181,10 @@ const CreateUser = () => {
                         placeholder="Type a phone"
                         {...formik.getFieldProps("phone")}
                       />
-                      {formik.touched.phone && formik.errors.phone ? (
-                        <div className="text-danger">{formik.errors.phone}</div>
-                      ) : null}
                     </Col>
+                    {formik.touched.phone && formik.errors.phone ? (
+                      <div className="text-danger">{formik.errors.phone}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
                 <Col xs={6} className="mb-3">
@@ -209,12 +207,10 @@ const CreateUser = () => {
                         classNamePrefix="select"
                         placeholder="Select gender"
                       />
-                      {formik.touched.gender && formik.errors.gender ? (
-                        <div className="text-danger">
-                          {formik.errors.gender}
-                        </div>
-                      ) : null}
                     </Col>
+                    {formik.touched.gender && formik.errors.gender ? (
+                      <div className="text-danger">{formik.errors.gender}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
               </Row>
@@ -243,12 +239,12 @@ const CreateUser = () => {
                         classNamePrefix="select"
                         placeholder="Select role"
                       />
-                      {formik.touched.userRole && formik.errors.userRole ? (
-                        <div className="text-danger">
-                          {formik.errors.userRole}
-                        </div>
-                      ) : null}
                     </Col>
+                    {formik.touched.userRole && formik.errors.userRole ? (
+                      <div className="text-danger">
+                        {formik.errors.userRole}
+                      </div>
+                    ) : null}
                   </Form.Group>
                 </Col>
                 <Col xs={6} className="mb-3">
@@ -274,12 +270,12 @@ const CreateUser = () => {
                         classNamePrefix="select"
                         placeholder="Select department(s)"
                       />
-                      {formik.touched.department && formik.errors.department ? (
-                        <div className="text-danger">
-                          {formik.errors.department}
-                        </div>
-                      ) : null}
                     </Col>
+                    {formik.touched.department && formik.errors.department ? (
+                      <div className="text-danger">
+                        {formik.errors.department}
+                      </div>
+                    ) : null}
                   </Form.Group>
                 </Col>
               </Row>
@@ -306,12 +302,10 @@ const CreateUser = () => {
                         classNamePrefix="select"
                         isDisabled={true} // Disable toàn bộ Select để không thể chọn
                       />
-                      {formik.touched.status && formik.errors.status ? (
-                        <div className="text-danger">
-                          {formik.errors.status}
-                        </div>
-                      ) : null}
                     </Col>
+                    {formik.touched.status && formik.errors.status ? (
+                      <div className="text-danger">{formik.errors.status}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
 
@@ -327,10 +321,10 @@ const CreateUser = () => {
                         placeholder=""
                         {...formik.getFieldProps("note")}
                       />
-                      {formik.touched.note && formik.errors.note ? (
-                        <div className="text-danger">{formik.errors.note}</div>
-                      ) : null}
                     </Col>
+                    {formik.touched.note && formik.errors.note ? (
+                      <div className="text-danger">{formik.errors.note}</div>
+                    ) : null}
                   </Form.Group>
                 </Col>
               </Row>

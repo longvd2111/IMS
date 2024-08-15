@@ -16,6 +16,7 @@ import { AuthContext } from "~/contexts/auth/AuthContext";
 import ConfirmModal from "~/components/common/ConfirmBanCandidate";
 import "../../assets/css/candidate-css/CandidateDetail.css";
 import { getSkillIds } from "~/utils/Validate";
+import { getMessage } from "~/data/Messages";
 
 const CandidateDetail = () => {
   const { id } = useParams();
@@ -36,50 +37,33 @@ const CandidateDetail = () => {
         }
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching candidate:", error);
         setError(error);
         setLoading(false);
       }
     };
 
-    fetchAllUser(0, 1000)
-      .then((response) => {
-        const users = response.data;
-        const recruitersList = users
-          .filter((user) => user.userRole === "ROLE_RECRUITER")
-          .map((user) => ({
-            value: user.id,
-            label: user.fullName,
-          }));
-        setRecruiters(recruitersList);
-      })
-      .catch((error) => {
-        console.error("Error fetching users:", error);
-        toast.error("Error fetching users. Please try again.");
-      });
+    fetchAllUser(0, 1000).then((response) => {
+      const users = response.data;
+      const recruitersList = users
+        .filter((user) => user.userRole === "ROLE_RECRUITER")
+        .map((user) => ({
+          value: user.id,
+          label: user.fullName,
+        }));
+      setRecruiters(recruitersList);
+    });
 
     getCandidateById();
   }, [id]);
 
   const handleBanCandidate = async () => {
     try {
-      // Find recruiter by label
       const recruiter = recruiters.find(
         (user) => user.label === candidate.recruiter
       );
       if (!recruiter) {
         throw new Error("Recruiter not found");
       }
-
-      // Map skills to skill IDs
-      // const skillIds = (candidate.skills || [])
-      //   .map((skill) => {
-      //     const skillOption = optionsSkills.find(
-      //       (option) => option.label.toLowerCase() === skill.toLowerCase()
-      //     );
-      //     return skillOption ? skillOption.value : null;
-      //   })
-      //   .filter((value) => value !== null);
 
       const skillIds = getSkillIds(candidate?.skills || [], optionsSkills);
 
@@ -106,11 +90,10 @@ const CandidateDetail = () => {
 
       // Update the candidate
       await updateCandidate(updatedCandidate);
-      toast.success("Candidate has been banned successfully");
+      toast.success(getMessage("ME031"));
       navigate(`/candidate`);
     } catch (error) {
-      toast.error("Error banning candidate. Please try again.");
-      console.error("Error banning candidate:", error);
+      toast.error(getMessage("ME032"));
     }
   };
 

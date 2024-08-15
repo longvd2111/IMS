@@ -12,7 +12,7 @@ const ROLE_RECRUITER = "ROLE_RECRUITER";
 
 export const userRole = [
   { value: ROLE_ADMIN, label: "Admin" },
-  { value: ROLE_INTERVIEWER, label: "Interview" },
+  { value: ROLE_INTERVIEWER, label: "Interviewer" },
   { value: ROLE_MANAGER, label: "Manager" },
   { value: ROLE_RECRUITER, label: "Recruiter" },
 ];
@@ -328,13 +328,13 @@ export const getButtonsByStatus = (status, userRole) => {
           {
             label: "Mark as sent to candidate",
             status: "WAITING_FOR_RESPONSE",
-            style: { backgroundColor: "#b0cdfa" },
+            class: "button-form button-form--primary",
             testId: "button-mark-sent",
           },
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form button-form--danger",
             testId: "button-cancel",
           },
         ],
@@ -343,7 +343,7 @@ export const getButtonsByStatus = (status, userRole) => {
             label: "Cancel",
             action: "CANCEL",
             testId: "button-cancel-bottom",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form ",
           },
         ],
       };
@@ -353,19 +353,19 @@ export const getButtonsByStatus = (status, userRole) => {
           {
             label: "Accepted Offer",
             status: "ACCEPTED_OFFER",
-            style: { backgroundColor: "#b0cdfa" },
+            class: "button-form button-form--primary",
             testId: "button-accepted",
           },
           {
             label: "Declined Offer",
             status: "DECLINED_OFFER",
-            style: { backgroundColor: "#fad3b0" },
+            class: "button-form button-form--warning",
             testId: "button-declined",
           },
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form button-form--danger",
             testId: "button-cancel",
           },
         ],
@@ -374,7 +374,7 @@ export const getButtonsByStatus = (status, userRole) => {
             label: "Cancel",
             action: "CANCEL",
             testId: "button-cancel-bottom",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form button-form--danger",
           },
         ],
       };
@@ -384,7 +384,7 @@ export const getButtonsByStatus = (status, userRole) => {
           {
             label: "Cancel Offer",
             status: "CANCELLED_OFFER",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form button-form--danger",
             testId: "button-cancel",
           },
         ],
@@ -393,7 +393,7 @@ export const getButtonsByStatus = (status, userRole) => {
             label: "Cancel",
             action: "CANCEL",
             testId: "button-cancel-bottom",
-            style: { backgroundColor: "#f2979d" },
+            class: "button-form button-form--danger",
           },
         ],
       };

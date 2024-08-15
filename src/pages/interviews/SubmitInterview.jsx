@@ -27,6 +27,7 @@ import "../../assets/css/candidate-css/CandidateDetail.css";
 import { AuthContext } from "~/contexts/auth/AuthContext";
 import { fetchCandidateById, updateCandidate } from "~/services/candidateApi";
 import { toast } from "react-toastify";
+import { getMessage } from "~/data/Messages";
 
 const SubmitInterview = () => {
   const [show, setShow] = useState(false);
@@ -35,6 +36,7 @@ const SubmitInterview = () => {
   const handleShow = () => setShow(true);
   const { user } = useContext(AuthContext);
   const role = userRole.find((r) => r.value === user?.role)?.value;
+  const [isLoading, setIsLoading] = useState(true);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ const SubmitInterview = () => {
 
   useEffect(() => {
     getInterviewSchedule(id);
+    setIsLoading(false);
   }, [id]);
 
   useEffect(() => {
@@ -77,10 +80,6 @@ const SubmitInterview = () => {
     } else {
       console.error("No data candidate returned from API");
     }
-  };
-
-  const handleClick = (event) => {
-    event.preventDefault();
   };
 
   const handleSubmit = async (event) => {
@@ -145,12 +144,18 @@ const SubmitInterview = () => {
 
     if (resInterview && resCan) {
       handleClose();
-      toast.success(resInterview);
+      toast.success(getMessage("ME014"));
       navigate("/interview");
     } else {
-      toast.error("Failed to create interview schedule!");
+      toast.error(getMessage("ME013"));
     }
   };
+
+  const isInterviewActive = interviewSchedule?.interviewStatus !== "CANCELLED";
+
+  if (isLoading) {
+    return <div>Loading...</div>; // Có thể thay thế bằng spinner hoặc bất kỳ thông báo tải nào
+  }
 
   return (
     <div className="candidate-detail-container">
@@ -263,7 +268,7 @@ const SubmitInterview = () => {
                   <Form.Label className="mb-0 me-2">
                     <strong>Result:</strong>
                   </Form.Label>
-                  {interviewSchedule?.interviewStatus !== "CANCELLED" ? (
+                  {isInterviewActive ? (
                     <Form.Control
                       as="select"
                       value={result}
@@ -271,7 +276,9 @@ const SubmitInterview = () => {
                       className="flex-grow-1"
                     >
                       <option value="">Select a result</option>
-                      {InterviewResult.map((item) => (
+                      {InterviewResult.filter(
+                        (item) => item.value !== "NAN"
+                      ).map((item) => (
                         <option key={item.value} value={item.value}>
                           {item.label}
                         </option>
@@ -294,7 +301,7 @@ const SubmitInterview = () => {
         </div>
 
         <div className="actions">
-          {interviewSchedule?.interviewStatus !== "CANCELLED" && (
+          {isInterviewActive && (
             <Form onSubmit={handleSubmit}>
               <button
                 className="button-form button-form--warning"

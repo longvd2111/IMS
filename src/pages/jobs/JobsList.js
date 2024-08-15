@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { JobStatus, JobLevel } from "~/data/Constants";
 import { importJob } from "~/services/jobApi";
 import * as XLSX from "xlsx";
+import { getMessage } from "~/data/Messages";
 export default function JobsList() {
   // Cập nhật skillsMap với định dạng { value, label }
   const skillsMap = {
@@ -86,10 +87,9 @@ export default function JobsList() {
       const updatedJobs = jobs.filter((item) => item.id !== modalJob.id);
       setJobs(updatedJobs);
       setFilteredJobs(updatedJobs);
-      toast.success("Job deleted successfully");
+      toast.success(getMessage("ME019"));
     } catch (error) {
-      console.error("Error deleting job:", error);
-      toast.error("Error deleting job. Please try again.");
+      toast.error(getMessage("ME020"));
     } finally {
       setShowModal(false);
     }
@@ -184,8 +184,8 @@ export default function JobsList() {
           ...row,
           startDate: startDateArray,
           endDate: endDateArray,
-          skillIds: [1,3],
-          benifitIds: [2,5],
+          skillIds: [1, 3],
+          benifitIds: [2, 5],
           jobStatus: "OPEN",
         };
 

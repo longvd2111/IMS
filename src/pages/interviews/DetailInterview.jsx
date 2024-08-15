@@ -59,7 +59,7 @@ const InterviewDetail = () => {
 
       <div className="candidate-ban">
         <button className="button-form button-form--primary">
-          Send remaider
+          Send reminder
         </button>
       </div>
 

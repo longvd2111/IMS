@@ -23,18 +23,15 @@ import {
   getSkillIds,
 } from "~/utils/Validate";
 import "../../assets/css/candidate-css/CandidateDetail.css";
+import { getMessage } from "~/data/Messages";
 
 const CreateInterview = () => {
-  const [show, setShow] = useState(false);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-
   const [optionInterviews, setOptionInterviews] = useState([]);
   const [optionRecruiters, setOptionRecruiters] = useState([]);
   const [optionJobs, setOptionJobs] = useState([]);
   const [optionCandidates, setOptionCandidates] = useState([]);
   const [formdataCandidate, setFormdataCandidate] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getInterviewer(0, 1000);
@@ -61,6 +58,7 @@ const CreateInterview = () => {
       );
     }
   };
+
   const getInterviewer = async (index, pageSize) => {
     let res = await fetchAllUser(index, pageSize);
     const ROLE_INTERVIEWER = userRole.find(
@@ -112,8 +110,6 @@ const CreateInterview = () => {
     }
   };
 
-  const navigate = useNavigate();
-
   const formik = useFormik({
     initialValues: {
       title: "",
@@ -132,35 +128,31 @@ const CreateInterview = () => {
       jobId: "",
     },
     validationSchema: Yup.object({
-      title: Yup.string().required("You must fill in this section!"),
-      candidateId: Yup.number().required("You must select an option!"),
+      title: Yup.string().required(getMessage("ME002")),
+      candidateId: Yup.number().required(getMessage("ME002")),
       interviewerSet: Yup.array()
-        .required("You must select at least an option!")
-        .min(1),
-      recruiterId: Yup.string().required("You must select an recruiter"),
-      jobId: Yup.string().required("You must select a job"),
+        .required(getMessage("ME002"))
+        .min(1, getMessage("ME002")),
+      recruiterId: Yup.string().required(getMessage("ME002")),
+      jobId: Yup.string().required(getMessage("ME002")),
       scheduleDate: Yup.date()
-        .min(new Date(), "Schedule must be today or in the future")
-        .required("Schedule date is required!"),
+        .min(new Date(), getMessage("ME033"))
+        .required(getMessage("ME002")),
       scheduleTimeFrom: Yup.string()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format")
-        .required("Start time is required!"),
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, getMessage("ME036"))
+        .required(getMessage("ME002")),
       scheduleTimeTo: Yup.string()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format")
-        .required("End time is required!")
-        .test(
-          "is-greater",
-          "End time must be later than start time",
-          function (value) {
-            const { scheduleTimeFrom } = this.parent;
-            if (!scheduleTimeFrom || !value) return true;
-            return value > scheduleTimeFrom;
-          }
-        ),
-      note: Yup.string().max(500, "Note cannot be more than 500 characters"),
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, getMessage("ME036"))
+        .required(getMessage("ME002"))
+        .test("is-greater", getMessage("ME018"), function (value) {
+          const { scheduleTimeFrom } = this.parent;
+          if (!scheduleTimeFrom || !value) return true;
+          return value > scheduleTimeFrom;
+        }),
+      note: Yup.string().max(500, getMessage("ME034")),
       meetingId: Yup.string().matches(
         /^[a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{3}$/,
-        "Meeting Id must be in the format xxx-xxxx-xxx with letters or digits"
+        getMessage("ME035")
       ),
     }),
     onSubmit: async (values) => {
@@ -173,6 +165,7 @@ const CreateInterview = () => {
         scheduleDate,
         ...valuesWithoutDate
       } = values;
+
       const scheduleTimeFromFinal = convertToDateTimeSQL6(
         scheduleDate,
         scheduleTimeFrom
@@ -218,10 +211,10 @@ const CreateInterview = () => {
       ]);
 
       if (resInterview && resCan) {
-        toast.success(resInterview);
+        toast.success("ME022");
         navigate("/interview");
       } else {
-        toast.error("Failed to created interview schedule!");
+        toast.error(getMessage("ME021"));
       }
     },
   });
@@ -530,8 +523,7 @@ const CreateInterview = () => {
               <button
                 type="button"
                 onClick={(e) => {
-                  e.preventDefault();
-                  handleShow(); // Hiển thị modal
+                  formik.handleSubmit();
                 }}
                 className="button-form button-form--primary"
               >
@@ -546,34 +538,6 @@ const CreateInterview = () => {
               </button>
             </Col>
           </Row>
-
-          <Modal show={show} onHide={handleClose} className="custom-modal">
-            <Modal.Header closeButton>
-              <Modal.Title>Create new Interview Schedule</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              Are you sure you want to create new schedule?
-            </Modal.Body>
-            <Modal.Footer style={{ justifyContent: "space-evenly" }}>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="button-form button-form--danger"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="button-form button-form--primary"
-                onClick={() => {
-                  formik.handleSubmit();
-                  handleClose();
-                }}
-              >
-                OK
-              </button>
-            </Modal.Footer>
-          </Modal>
         </Form>
       </div>
     </div>

@@ -12,6 +12,7 @@ import {
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-toastify/dist/ReactToastify.css";
+import { getMessage } from "~/data/Messages";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Login = () => {
       const res = await loginApi(username.trim(), password);
       if (res && res?.token) {
         loginContext(res?.user, res?.token, remember);
-        toast.success("Welcome to Interview Management System!");
+        toast.success(getMessage("ME042"));
         navigate("/");
       }
     } catch (error) {

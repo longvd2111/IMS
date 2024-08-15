@@ -34,6 +34,7 @@ import {
   getSkillIds,
 } from "~/utils/Validate";
 import { toast } from "react-toastify";
+import { getMessage } from "~/data/Messages";
 
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -51,12 +52,6 @@ const EditInterview = () => {
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-
-  const [showEditConfirmation, setShowEditConfirmation] = useState(false);
-
-  // Add these functions
-  const handleShowEditConfirmation = () => setShowEditConfirmation(true);
-  const handleCloseEditConfirmation = () => setShowEditConfirmation(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -203,35 +198,31 @@ const EditInterview = () => {
       jobId: interviewSchedule?.jobDTO?.id || "",
     },
     validationSchema: Yup.object({
-      title: Yup.string().required("You must fill in this section!"),
-      candidateId: Yup.number().required("You must select an option!"),
+      title: Yup.string().required(getMessage("ME002")),
+      candidateId: Yup.number().required(getMessage("ME002")),
       interviewerSet: Yup.array()
-        .required("You must select at least an option!")
-        .min(1),
-      recruiterId: Yup.string().required("You must select a recruiter"),
-      jobId: Yup.string().required("You must select a job"),
+        .required(getMessage("ME002"))
+        .min(1, getMessage("ME002")),
+      recruiterId: Yup.string().required(getMessage("ME002")),
+      jobId: Yup.string().required(getMessage("ME002")),
       scheduleDate: Yup.date()
-        .min(new Date(), "Schedule must be today or in the future")
-        .required("Schedule date is required!"),
+        .min(new Date(), getMessage("ME033"))
+        .required(getMessage("ME002")),
       scheduleTimeFrom: Yup.string()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format")
-        .required("Start time is required!"),
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, getMessage("ME036"))
+        .required(getMessage("ME002")),
       scheduleTimeTo: Yup.string()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format")
-        .required("End time is required!")
-        .test(
-          "is-greater",
-          "End time must be later than start time",
-          function (value) {
-            const { scheduleTimeFrom } = this.parent;
-            if (!scheduleTimeFrom || !value) return true;
-            return value > scheduleTimeFrom;
-          }
-        ),
-      note: Yup.string().max(500, "Note cannot be more than 500 characters"),
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/, getMessage("ME036"))
+        .required(getMessage("ME002"))
+        .test("is-greater", getMessage("ME018"), function (value) {
+          const { scheduleTimeFrom } = this.parent;
+          if (!scheduleTimeFrom || !value) return true;
+          return value > scheduleTimeFrom;
+        }),
+      note: Yup.string().max(500, getMessage("ME034")),
       meetingId: Yup.string().matches(
         /^[a-zA-Z0-9]{3}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{3}$/,
-        "Meeting Id must be in the format xxx-xxxx-xxx with letters or digits"
+        getMessage("ME035")
       ),
     }),
     enableReinitialize: true,
@@ -239,7 +230,7 @@ const EditInterview = () => {
       // call api candidateNew
       const candidateRes = await fetchCandidateById(values.candidateId);
       if (!candidateRes) {
-        toast.error("Candidate does not exist");
+        toast.error(getMessage("ME021"));
         return;
       }
 
@@ -287,23 +278,19 @@ const EditInterview = () => {
         newCandidateData,
         oldCandidateData = null
       ) => {
-        try {
-          if (oldCandidateData) {
-            const resOldCan = await updateCandidate(oldCandidateData);
-            if (!resOldCan) throw new Error("Failed to update old candidate");
-          }
-
-          const resNewCan = await updateCandidate(newCandidateData);
-          if (!resNewCan) throw new Error("Failed to update new candidate");
-
-          const resInterview = await putInterview(finalValues);
-          if (!resInterview) throw new Error("Failed to update interview");
-
-          toast.success("Interview schedule updated successfully!");
-          navigate("/interview");
-        } catch (error) {
-          toast.error(error.message || "Failed to create interview schedule!");
+        if (oldCandidateData) {
+          const resOldCan = await updateCandidate(oldCandidateData);
+          if (!resOldCan) throw new Error(getMessage("ME037"));
         }
+
+        const resNewCan = await updateCandidate(newCandidateData);
+        if (!resNewCan) throw new Error(getMessage("ME038"));
+
+        const resInterview = await putInterview(finalValues);
+        if (!resInterview) throw new Error(getMessage("ME013"));
+
+        toast.success(getMessage("ME014"));
+        navigate("/interview");
       };
 
       if (newCandidate?.id === oldCandidate?.id) {
@@ -378,10 +365,10 @@ const EditInterview = () => {
 
     if (resInterview && resCan) {
       handleClose();
-      toast.success(resInterview);
+      toast.success(getMessage("ME014"));
       navigate("/interview");
     } else {
-      toast.error("Failed to create interview schedule!");
+      toast.error(getMessage("ME013"));
     }
   };
 
@@ -404,7 +391,7 @@ const EditInterview = () => {
           <div className="candidate-ban">
             <button
               className="button-form button-form--danger"
-              onClick={handleShow}
+              onClick={handleCancelSchedule}
             >
               Cancel Schedule
             </button>
@@ -730,9 +717,8 @@ const EditInterview = () => {
           <Row className="mt-4">
             <Col className="d-flex justify-content-center">
               <button
-                type="button"
+                type="submit"
                 className="button-form button-form--primary"
-                onClick={handleShowEditConfirmation}
               >
                 Update
               </button>
@@ -745,63 +731,8 @@ const EditInterview = () => {
               </button>
             </Col>
           </Row>
-
-          <Modal
-            show={showEditConfirmation}
-            onHide={handleCloseEditConfirmation}
-            className="custom-modal"
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Edit Interview Schedule</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              Are you sure you want to edit this interview schedule?
-            </Modal.Body>
-            <Modal.Footer style={{ justifyContent: "space-evenly" }}>
-              <button
-                onClick={handleCloseEditConfirmation}
-                className="button-form button-form--danger"
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  formik.handleSubmit();
-                  handleCloseEditConfirmation();
-                }}
-                className="button-form button-form--primary"
-                type="button"
-              >
-                Confirm
-              </button>
-            </Modal.Footer>
-          </Modal>
         </Form>
       </div>
-
-      <Modal show={show} onHide={handleClose} className="custom-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>Cancle Interview Schedule</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Are you sure you want to cancel this interview?</Modal.Body>
-        <Modal.Footer style={{ justifyContent: "space-evenly" }}>
-          <button
-            onClick={handleClose}
-            className="button-form button-form--danger"
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleCancelSchedule}
-            className="button-form button-form--primary"
-            type="button"
-          >
-            OK
-          </button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 };

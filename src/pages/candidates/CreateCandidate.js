@@ -18,6 +18,7 @@ import { fetchAllUser } from "~/services/userServices";
 import { optionCreateStatus } from "../../data/Constants";
 import { Formik, Field, Form as FormikForm, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { getMessage } from "~/data/Messages";
 
 export default function CreateCandidate() {
   const navigate = useNavigate();
@@ -43,28 +44,24 @@ export default function CreateCandidate() {
   const validationSchema = Yup.object().shape({
     fullName: Yup.string().required("Full Name is required"),
     email: Yup.string()
-      .email("Invalid email address")
+      .email(getMessage("ME009"))
       .matches(
         /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
         "Email must be in the format name@gmail.com"
       )
-      .required("Email is required"),
-    dob: Yup.date()
-      .nullable()
-      .max(new Date(), "Date of Birth must be in the past"),
+      .required(getMessage("ME002")),
+    dob: Yup.date().nullable().max(new Date(), getMessage("ME010")),
     phone: Yup.string()
       .matches(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
-      .required("Phone number is required"),
-    gender: Yup.object().nullable().required("Gender is required"),
-    candidatePosition: Yup.object()
-      .nullable()
-      .required("Current Position is required"),
-    highestLevel: Yup.object().nullable().required("Highest Level is required"),
+      .required(getMessage("ME002")),
+    gender: Yup.object().nullable().required(getMessage("ME002")),
+    candidatePosition: Yup.object().nullable().required(getMessage("ME002")),
+    highestLevel: Yup.object().nullable().required(getMessage("ME002")),
     skillIds: Yup.array()
-      .min(1, "At least one skill is required")
-      .required("Skills are required"),
-    recruiterId: Yup.object().nullable().required("Recruiter is required"),
-    candidateStatus: Yup.object().nullable().required("Status is required"),
+      .min(1, getMessage("ME002"))
+      .required(getMessage("ME002")),
+    recruiterId: Yup.object().nullable().required(getMessage("ME002")),
+    candidateStatus: Yup.object().nullable().required(getMessage("ME002")),
   });
 
   const handleSubmit = (values, { setSubmitting }) => {
@@ -80,12 +77,11 @@ export default function CreateCandidate() {
 
     createCandidate(payload)
       .then((response) => {
-        toast.success("Candidate created successfully!");
+        toast.success(getMessage("ME012"));
         navigate("/candidate");
       })
       .catch((error) => {
-        console.error("There was an error creating the candidate!", error);
-        toast.error("Error creating candidate. Please try again.");
+        toast.error(getMessage("ME011"));
       })
       .finally(() => {
         setSubmitting(false);
@@ -93,21 +89,16 @@ export default function CreateCandidate() {
   };
 
   useEffect(() => {
-    fetchAllUser(0, 1000)
-      .then((response) => {
-        const users = response.data;
-        const recruiters = users
-          .filter((user) => user.userRole === "ROLE_RECRUITER")
-          .map((user) => ({
-            label: user.fullName,
-            value: user.id,
-          }));
-        setRecruiters(recruiters);
-      })
-      .catch((error) => {
-        console.error("Error fetching users", error);
-        toast.error("Error fetching users. Please try again.");
-      });
+    fetchAllUser(0, 1000).then((response) => {
+      const users = response.data;
+      const recruiters = users
+        .filter((user) => user.userRole === "ROLE_RECRUITER")
+        .map((user) => ({
+          label: user.fullName,
+          value: user.id,
+        }));
+      setRecruiters(recruiters);
+    });
   }, []);
 
   return (

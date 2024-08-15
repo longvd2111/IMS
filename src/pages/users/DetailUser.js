@@ -9,9 +9,11 @@ import {
   roleUser,
   CandidateGender,
   departmentOffer,
+  userRole,
 } from "~/data/Constants";
 import { toast } from "react-toastify";
 import { AuthContext } from "~/contexts/auth/AuthContext";
+import { getMessage } from "~/data/Messages";
 
 export default function DetailUser() {
   const { user } = useContext(AuthContext);
@@ -50,25 +52,19 @@ export default function DetailUser() {
   }, [id]);
 
   const handleChangeStatus = async () => {
-    try {
-      const submitUpdate = {
-        ...formdata,
-        userStatus:
-          userDetail.userStatus === "ACTIVE" ? "DEACTIVATED" : "ACTIVE",
-      };
-      const responseUpdate = await ApiUser.editUser(submitUpdate);
+    const submitUpdate = {
+      ...formdata,
+      userStatus: userDetail.userStatus === "ACTIVE" ? "DEACTIVATED" : "ACTIVE",
+    };
+    const responseUpdate = await ApiUser.editUser(submitUpdate);
 
-      if (submitUpdate.userStatus === "ACTIVE") {
-        toast.success("Active User successful!");
-      } else {
-        toast.success("De-Active User successful!");
-      }
-      await loadDetailUser();
-      navigate("/user");
-    } catch (error) {
-      console.error("ngooo", error);
-      toast.error("Active/De-Active User fail");
+    if (responseUpdate.userStatus === "ACTIVE") {
+      toast.success(getMessage("ME014"));
+    } else {
+      toast.success(getMessage("ME013"));
     }
+    await loadDetailUser();
+    navigate("/user");
   };
 
   return (
@@ -87,10 +83,10 @@ export default function DetailUser() {
       </Row>
       <div className="candidate-ban">
         <div className="button-group">
-          {userDetail?.id &&
-            user?.id &&
-            userDetail.id !== user.id &&
-            (userDetail.userStatus === "DEACTIVATED" ? (
+          {userDetail &&
+            userDetail.id &&
+            userDetail?.userRole !== "ROLE_ADMIN" &&
+            (userDetail?.userStatus === "DEACTIVATED" ? (
               <button
                 className="button-form button-form--success"
                 onClick={handleChangeStatus}

@@ -9,7 +9,7 @@ import "../../assets/css/candidate-css/CandidateDetail.css";
 import "../../assets/css/job-css/JobForm.css";
 import { createJobs } from "~/services/jobApi";
 import { toast } from "react-toastify";
-
+import { getMessage } from "~/data/Messages";
 
 export default function CreateForm() {
   const navigate = useNavigate();
@@ -58,28 +58,26 @@ export default function CreateForm() {
       selectedSkills: [],
     },
     validationSchema: Yup.object({
-      jobTitle: Yup.string().required("Job Title is required"),
+      jobTitle: Yup.string().required(getMessage("ME002")),
       startDate: Yup.date()
-        .min(new Date(today.setHours(0, 0, 0, 0)), "Start date must be today or later")
-        .required("Start Date is required"),
+        .min(new Date(today.setHours(0, 0, 0, 0)), getMessage("ME017"))
+        .required(getMessage("002")),
       endDate: Yup.date()
-        .min(Yup.ref("startDate"), "End date must be at least one day after Start date")
-        .required("End Date is required"),
-      salaryFrom: Yup.number()
-        .min(1, "Salary must be greater than 0")
-        .nullable(),
+        .min(Yup.ref("startDate"), getMessage("ME018"))
+        .required(getMessage("002")),
+      salaryFrom: Yup.number().min(1).nullable(getMessage("ME039")),
       salaryTo: Yup.number()
-        .min(Yup.ref("salaryFrom"), "Salary To must be greater than Salary From")
+        .min(Yup.ref("salaryFrom"), getMessage("ME040"))
         .nullable(),
       workingAddress: Yup.string().nullable(),
       description: Yup.string().nullable(),
       selectedSkills: Yup.array()
-        .min(1, "Skills are required")
-        .required("Skills are required"),
+        .min(1, getMessage("ME002"))
+        .required(getMessage("ME002")),
       selectedBenefits: Yup.array()
-        .min(1, "At least one Benefit is required")
-        .required("Benefits are required"),
-      selectedLevel: Yup.object().nullable().required("Level is required"),
+        .min(1, getMessage("ME002"))
+        .required(getMessage("ME002")),
+      selectedLevel: Yup.object().nullable().required(getMessage("ME002")),
     }),
     validateOnChange: true,
     validateOnBlur: true,
@@ -93,25 +91,20 @@ export default function CreateForm() {
 
       createJobs(payload)
         .then((response) => {
-          toast.success("Job created successfully!");
+          toast.success(getMessage("ME016"));
           navigate("/job");
         })
         .catch((error) => {
-          console.error("There was an error creating the job!", error);
-          toast.error("Error creating job. Please try again.");
+          toast.error(getMessage("ME015"));
         });
     },
   });
 
   return (
     <Container className="mb-3">
-      
-
       <div className="breadcrumb__group">
-        <span
-          className="breadcrumb-link"
-          onClick={() => navigate("/job")}
-        >Job List
+        <span className="breadcrumb-link" onClick={() => navigate("/job")}>
+          Job List
         </span>
         <FaAngleRight />
         <span className="breadcrumb-link__active">Create Job</span>
@@ -120,276 +113,335 @@ export default function CreateForm() {
         <Row>
           <Form onSubmit={formik.handleSubmit}>
             <div className="section">
-          <div className="section-personal-info">
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={2}>
-                    Job Title <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="text"
-                      name="jobTitle"
-                      value={formik.values.jobTitle}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter Job Title"
-                      isInvalid={formik.touched.jobTitle && !!formik.errors.jobTitle}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formik.touched.jobTitle && formik.errors.jobTitle}
-                    </Form.Control.Feedback>
+              <div className="section-personal-info">
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        Job Title <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Form.Control
+                          type="text"
+                          name="jobTitle"
+                          value={formik.values.jobTitle}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          placeholder="Enter Job Title"
+                          isInvalid={
+                            formik.touched.jobTitle && !!formik.errors.jobTitle
+                          }
+                        />
+                      </Col>
+                      {formik.touched.jobTitle && formik.errors.jobTitle && (
+                        <div className="invalid-feedback d-block">
+                          {formik.errors.jobTitle}
+                        </div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={2}>
-                    Skills <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      isMulti
-                      name="selectedSkills"
-                      value={formik.values.selectedSkills}
-                      onChange={(selectedOptions) =>
-                        formik.setFieldValue("selectedSkills", selectedOptions)
-                      }
-                      onBlur={() => formik.setFieldTouched("selectedSkills", true)}
-                      options={optionsSkill}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                    />
-                    {formik.touched.selectedSkills && formik.errors.selectedSkills && (
-                      <div className="invalid-feedback d-block">
-                        {formik.errors.selectedSkills}
-                      </div>
-                    )}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Start Date <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="date"
-                      name="startDate"
-                      value={formik.values.startDate}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter Start Date"
-                      min={minStartDate}
-                      isInvalid={formik.touched.startDate && !!formik.errors.startDate}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formik.touched.startDate && formik.errors.startDate}
-                    </Form.Control.Feedback>
-                  </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    End Date <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="date"
-                      name="endDate"
-                      value={formik.values.endDate}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter End Date"
-                      min={
-                        formik.values.startDate
-                          ? new Date(
-                              new Date(formik.values.startDate).getTime() +
-                                24 * 60 * 60 * 1000
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        Skills <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Select
+                          isMulti
+                          name="selectedSkills"
+                          value={formik.values.selectedSkills}
+                          onChange={(selectedOptions) =>
+                            formik.setFieldValue(
+                              "selectedSkills",
+                              selectedOptions
                             )
-                              .toISOString()
-                              .split("T")[0]
-                          : minStartDate
-                      }
-                      isInvalid={formik.touched.endDate && !!formik.errors.endDate}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formik.touched.endDate && formik.errors.endDate}
-                    </Form.Control.Feedback>
+                          }
+                          onBlur={() =>
+                            formik.setFieldTouched("selectedSkills", true)
+                          }
+                          options={optionsSkill}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                        />
+                      </Col>
+                      {formik.touched.selectedSkills &&
+                        formik.errors.selectedSkills && (
+                          <div className="invalid-feedback d-block">
+                            {formik.errors.selectedSkills}
+                          </div>
+                        )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Salary Range
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Row>
-                      <Col sm={2}>From</Col>
-                      <Col sm={4}>
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        Start Date <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
                         <Form.Control
-                          type="text"
-                          min={0}
-                          name="salaryFrom"
-                          value={formik.values.salaryFrom}
+                          type="date"
+                          name="startDate"
+                          value={formik.values.startDate}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
-                          isInvalid={formik.touched.salaryFrom && !!formik.errors.salaryFrom}
+                          placeholder="Enter Start Date"
+                          min={minStartDate}
+                          isInvalid={
+                            formik.touched.startDate &&
+                            !!formik.errors.startDate
+                          }
                         />
-                        <Form.Control.Feedback type="invalid">
-                          {formik.touched.salaryFrom && formik.errors.salaryFrom}
-                        </Form.Control.Feedback>
                       </Col>
-                      <Col sm={2}>To</Col>
-                      <Col sm={4}>
-                        <Form.Control
-                          type="text"
-                          min={0}
-                          name="salaryTo"
-                          value={formik.values.salaryTo}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          isInvalid={formik.touched.salaryTo && !!formik.errors.salaryTo}
-                        />
-                        <Form.Control.Feedback type="invalid">
-                          {formik.touched.salaryTo && formik.errors.salaryTo}
-                        </Form.Control.Feedback>
-                      </Col>
-                    </Row>
+                      {formik.touched.startDate && formik.errors.startDate && (
+                        <div className="invalid-feedback d-block">
+                          {formik.errors.startDate}
+                        </div>
+                      )}
+                    </Form.Group>
                   </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={2}>
-                    Benefits <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      isMulti
-                      name="selectedBenefits"
-                      value={formik.values.selectedBenefits}
-                      onChange={(selectedOptions) =>
-                        formik.setFieldValue("selectedBenefits", selectedOptions)
-                      }
-                      onBlur={() => formik.setFieldTouched("selectedBenefits", true)}
-                      options={optionsBenefits}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                    />
-                    {formik.touched.selectedBenefits && formik.errors.selectedBenefits && (
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        End Date <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Form.Control
+                          type="date"
+                          name="endDate"
+                          value={formik.values.endDate}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          placeholder="Enter End Date"
+                          min={
+                            formik.values.startDate
+                              ? new Date(
+                                  new Date(formik.values.startDate).getTime() +
+                                    24 * 60 * 60 * 1000
+                                )
+                                  .toISOString()
+                                  .split("T")[0]
+                              : minStartDate
+                          }
+                          isInvalid={
+                            formik.touched.endDate && !!formik.errors.endDate
+                          }
+                        />
+                      </Col>
+                    </Form.Group>
+
+                    {formik.touched.endDate && formik.errors.endDate && (
                       <div className="invalid-feedback d-block">
-                        {formik.errors.selectedBenefits}
+                        {formik.errors.endDate}
                       </div>
                     )}
                   </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                </Row>
 
-            <Row style={{ marginTop: "10px" }}>
-              <Col xs={6}>
-                <Form.Group as={Row}>
-                  <Form.Label style={{ display: "flex" }} column sm={3}>
-                    Working Address
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      type="text"
-                      name="workingAddress"
-                      value={formik.values.workingAddress}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter Working Address"
-                      isInvalid={formik.touched.workingAddress && !!formik.errors.workingAddress}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formik.touched.workingAddress && formik.errors.workingAddress}
-                    </Form.Control.Feedback>
-                  </Col>
-                </Form.Group>
-              </Col>
-              <Col xs={6} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={2}>
-                    Level <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Select
-                      name="selectedLevel"
-                      value={formik.values.selectedLevel}
-                      onChange={(selectedOption) =>
-                        formik.setFieldValue("selectedLevel", selectedOption)
-                      }
-                      onBlur={() => formik.setFieldTouched("selectedLevel", true)}
-                      options={optionsLevel}
-                      className="basic-single-select"
-                      classNamePrefix="select"
-                    />
-                    {formik.touched.selectedLevel && formik.errors.selectedLevel && (
-                      <div className="invalid-feedback d-block">
-                        {formik.errors.selectedLevel}
-                      </div>
-                    )}
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group as={Row} className="align-items-center">
+                      <Col sm={3} style={{ paddingBottom: "10px" }}>
+                        Salary Range
+                      </Col>
+                      <Col sm={9}>
+                        <Row>
+                          <Col sm={6} className="d-flex align-items-center">
+                            <Col sm={4}>From</Col>
+                            <Col sm={8}>
+                              <Form.Control
+                                type="text"
+                                min={0}
+                                name="salaryFrom"
+                                value={formik.values.salaryFrom}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                isInvalid={
+                                  formik.touched.salaryFrom &&
+                                  !!formik.errors.salaryFrom
+                                }
+                              />
+                            </Col>
+                          </Col>
 
-            <Row>
-              <Col xs={{ span: 6, offset: 6 }} className="mb-3">
-                <Form.Group as={Row}>
-                  <Form.Label column sm={3}>
-                    Description
-                  </Form.Label>
-                  <Col sm={9}>
-                    <Form.Control
-                      as="textarea"
-                      name="description"
-                      value={formik.values.description}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter Description"
-                      style={{ minHeight: "100px" }}
-                      isInvalid={formik.touched.description && !!formik.errors.description}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formik.touched.description && formik.errors.description}
-                    </Form.Control.Feedback>
-                  </Col>
-                </Form.Group>
-              </Col>
-            </Row>
-            <br />
-            </div>
-            </div>
+                          <Col sm={6} className="d-flex align-items-center">
+                            <Col sm={4}>To</Col>
+                            <Col sm={8}>
+                              <Form.Control
+                                type="text"
+                                min={0}
+                                name="salaryTo"
+                                value={formik.values.salaryTo}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                isInvalid={
+                                  formik.touched.salaryTo &&
+                                  !!formik.errors.salaryTo
+                                }
+                              />
+                            </Col>
+                          </Col>
+                        </Row>
+                      </Col>
+                      {formik.touched.salaryFrom &&
+                        formik.errors.salaryFrom && (
+                          <div className="invalid-feedback d-block">
+                            {formik.errors.salaryFrom}
+                          </div>
+                        )}
 
-              <div className="button-group">
-                <button type="submit" className="button-form button-form--primary">
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  className="button-form"
-                  onClick={() => navigate("/job")}
-                >
-                  Cancel
-                </button>
+                      {formik.touched.salaryTo && formik.errors.salaryTo && (
+                        <div className="invalid-feedback d-block">
+                          {formik.errors.salaryTo}
+                        </div>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={2}>
+                        Benefits <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Select
+                          isMulti
+                          name="selectedBenefits"
+                          value={formik.values.selectedBenefits}
+                          onChange={(selectedOptions) =>
+                            formik.setFieldValue(
+                              "selectedBenefits",
+                              selectedOptions
+                            )
+                          }
+                          onBlur={() =>
+                            formik.setFieldTouched("selectedBenefits", true)
+                          }
+                          options={optionsBenefits}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                        />
+                      </Col>
+                      {formik.touched.selectedBenefits &&
+                        formik.errors.selectedBenefits && (
+                          <div className="invalid-feedback d-block">
+                            {formik.errors.selectedBenefits}
+                          </div>
+                        )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row style={{ marginTop: "10px" }}>
+                  <Col xs={6}>
+                    <Form.Group as={Row}>
+                      <Form.Label style={{ display: "flex" }} column sm={3}>
+                        Working Address
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Form.Control
+                          type="text"
+                          name="workingAddress"
+                          value={formik.values.workingAddress}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          placeholder="Enter Working Address"
+                          isInvalid={
+                            formik.touched.workingAddress &&
+                            !!formik.errors.workingAddress
+                          }
+                        />
+                      </Col>
+                      <Form.Control.Feedback type="invalid">
+                        {formik.touched.workingAddress &&
+                          formik.errors.workingAddress}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col xs={6} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={2}>
+                        Level <span style={{ color: "red" }}>*</span>
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Select
+                          name="selectedLevel"
+                          value={formik.values.selectedLevel}
+                          onChange={(selectedOption) =>
+                            formik.setFieldValue(
+                              "selectedLevel",
+                              selectedOption
+                            )
+                          }
+                          onBlur={() =>
+                            formik.setFieldTouched("selectedLevel", true)
+                          }
+                          options={optionsLevel}
+                          className="basic-single-select"
+                          classNamePrefix="select"
+                        />
+                      </Col>
+                      {formik.touched.selectedLevel &&
+                        formik.errors.selectedLevel && (
+                          <div className="invalid-feedback d-block">
+                            {formik.errors.selectedLevel}
+                          </div>
+                        )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col xs={{ span: 6, offset: 6 }} className="mb-3">
+                    <Form.Group as={Row}>
+                      <Form.Label column sm={3}>
+                        Description
+                      </Form.Label>
+                      <Col sm={9}>
+                        <Form.Control
+                          as="textarea"
+                          name="description"
+                          value={formik.values.description}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          placeholder="Enter Description"
+                          style={{ minHeight: "100px" }}
+                          isInvalid={
+                            formik.touched.description &&
+                            !!formik.errors.description
+                          }
+                        />
+                      </Col>
+                      <Form.Control.Feedback type="invalid">
+                        {formik.touched.description &&
+                          formik.errors.description}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <br />
               </div>
+            </div>
 
+            <div className="button-group">
+              <button
+                type="submit"
+                className="button-form button-form--primary"
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                className="button-form"
+                onClick={() => navigate("/job")}
+              >
+                Cancel
+              </button>
+            </div>
           </Form>
         </Row>
-        </div>
+      </div>
     </Container>
   );
 }

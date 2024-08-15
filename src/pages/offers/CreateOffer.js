@@ -16,6 +16,8 @@ import ApiService from "~/services/serviceApiOffer";
 import ApiUser from "~/services/usersApi";
 import { toast } from "react-toastify";
 import { fetchAllCandidate, updateCandidate } from "~/services/candidateApi";
+import { getMeetID } from "~/utils/Validate";
+import { getMessage } from "~/data/Messages";
 
 export default function CreateOffer() {
   const { id } = useParams();
@@ -207,23 +209,20 @@ export default function CreateOffer() {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.candidateId) errors.candidateId = "Please select a Candidate";
-    if (!formData.contractType)
-      errors.contractType = "Please select a Contract Type";
-    if (!formData.position) errors.position = "Please select a Position";
-    if (!formData.offerLevel) errors.offerLevel = "Please select a Level";
-    if (!formData.approvedBy) errors.approvedBy = "Please select an Approver";
-    if (!formData.department) errors.department = "Please select a Department";
+    if (!formData.candidateId) errors.candidateId = getMessage("M002");
+    if (!formData.contractType) errors.contractType = getMessage("M002");
+    if (!formData.position) errors.position = getMessage("M002");
+    if (!formData.offerLevel) errors.offerLevel = getMessage("M002");
+    if (!formData.approvedBy) errors.approvedBy = getMessage("M002");
+    if (!formData.department) errors.department = getMessage("M002");
     if (!formData.interviewSchedule)
-      errors.interviewSchedule = "Please select an Interview Schedule";
+      errors.interviewSchedule = getMessage("M002");
     if (!formData.recruiterOwnerId)
-      errors.recruiterOwnerId = "Please select a Recruiter Owner";
-    if (!formData.dueDate) errors.dueDate = "Please enter a Due Date";
-    if (!formData.basicSalary)
-      errors.basicSalary = "Please enter a Basic Salary";
-    if (!formData.contractFrom)
-      errors.contractFrom = "Please enter a start date";
-    if (!formData.contractTo) errors.contractTo = "Please enter an end date";
+      errors.recruiterOwnerId = getMessage("M002");
+    if (!formData.dueDate) errors.dueDate = getMessage("M002");
+    if (!formData.basicSalary) errors.basicSalary = getMessage("M002");
+    if (!formData.contractFrom) errors.contractFrom = getMessage("M002");
+    if (!formData.contractTo) errors.contractTo = getMessage("M002");
     return errors;
   };
   const handleSubmit = async (e) => {
@@ -292,11 +291,11 @@ export default function CreateOffer() {
         });
       }
       const response = await ApiService.ApiAddOffer(formData);
-      toast.success("Successfully created offer");
+      toast.success(getMessage("M024"));
       navigate("/offer");
     } catch (error) {
       console.error("Error adding offer:", error);
-      toast.error("Failed to create offer");
+      toast.error(getMessage("M023"));
     }
   };
 
