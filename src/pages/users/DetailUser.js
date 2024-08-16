@@ -58,13 +58,14 @@ export default function DetailUser() {
     };
     const responseUpdate = await ApiUser.editUser(submitUpdate);
 
-    if (responseUpdate.userStatus === "ACTIVE") {
+    console.log(responseUpdate);
+
+    if (responseUpdate && responseUpdate.success === true) {
       toast.success(getMessage("ME014"));
     } else {
-      toast.success(getMessage("ME013"));
+      toast.error(getMessage("ME013"));
     }
-    await loadDetailUser();
-    navigate("/user");
+    await loadDetailUser(userDetail.id);
   };
 
   return (

@@ -42,7 +42,12 @@ export default function CreateCandidate() {
   };
 
   const validationSchema = Yup.object().shape({
-    fullName: Yup.string().required("Full Name is required"),
+    fullName: Yup.string()
+      .matches(
+        /^[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*(\s[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*)+$/,
+        getMessage("ME041")
+      )
+      .required(getMessage("ME002")),
     email: Yup.string()
       .email(getMessage("ME009"))
       .matches(
@@ -50,7 +55,13 @@ export default function CreateCandidate() {
         "Email must be in the format name@gmail.com"
       )
       .required(getMessage("ME002")),
-    dob: Yup.date().nullable().max(new Date(), getMessage("ME010")),
+    dob: Yup.date()
+      .nullable()
+      .max(new Date(), getMessage("ME010"))
+      .test("is-over-18", "Must be at least 18 years old", function (value) {
+        return value && new Date().getFullYear() - value.getFullYear() >= 18;
+      })
+      .required(getMessage("ME002")),
     phone: Yup.string()
       .matches(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
       .required(getMessage("ME002")),
@@ -62,6 +73,20 @@ export default function CreateCandidate() {
       .required(getMessage("ME002")),
     recruiterId: Yup.object().nullable().required(getMessage("ME002")),
     candidateStatus: Yup.object().nullable().required(getMessage("ME002")),
+    yearExperience: Yup.number()
+      .positive("Years of experience must be a positive number")
+      .test(
+        "valid-experience",
+        "Invalid years of experience",
+        function (value) {
+          const dob = this.parent.dob;
+          if (dob && value) {
+            const age = new Date().getFullYear() - dob.getFullYear();
+            return value <= age - 18;
+          }
+          return true;
+        }
+      ),
   });
 
   const handleSubmit = (values, { setSubmitting }) => {
@@ -74,6 +99,8 @@ export default function CreateCandidate() {
       recruiterId: values.recruiterId?.value,
       candidateStatus: values.candidateStatus?.value,
     };
+
+    console.log(payload);
 
     createCandidate(payload)
       .then((response) => {
@@ -291,6 +318,11 @@ export default function CreateCandidate() {
                             min="0"
                           />
                         </Col>
+                        <ErrorMessage
+                          name="yearExperience"
+                          component="div"
+                          className="text-danger"
+                        />
                       </Form.Group>
                     </Col>
                   </Row>

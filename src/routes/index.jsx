@@ -9,6 +9,7 @@ import Login from "~/components/auth/Login";
 import EditInterview from "~/pages/interviews/EditInterview";
 import ForgotPassword from "~/components/auth/ForgotPassword";
 import SubmitInterview from "~/pages/interviews/SubmitInterview";
+import NotFound from "~/components/auth/NotFound";
 const Home = React.lazy(() => import("~/components/common/Home"));
 
 // Interview
@@ -51,6 +52,10 @@ const UpdateUser = React.lazy(() => import("~/pages/users/UpdateUser"));
 const CreateUser = React.lazy(() => import("~/pages/users/CreateUser"));
 
 const router = createBrowserRouter([
+  {
+    path: "/not-found",
+    element: <NotFound />,
+  },
   {
     path: "/no-permission",
     element: <NoPermission />,
@@ -220,6 +225,10 @@ const router = createBrowserRouter([
         element: <Home />,
       },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ]);
 

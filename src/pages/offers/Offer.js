@@ -42,22 +42,24 @@ export default function Offer() {
     loadDataOffer();
   }, []);
 
-  const filterOffer = dataOffer.filter((item) => {
-    const searchMatch =
-      !searchQuery ||
-      (item.candidate &&
-        Object.values(item.candidate).some((name) =>
-          name?.toLowerCase().includes(searchQuery.toLowerCase())
-        ));
+  const filterOffer = dataOffer
+    .filter((item) => {
+      const searchMatch =
+        !searchQuery ||
+        (item.candidate &&
+          Object.values(item.candidate).some((name) =>
+            name?.toLowerCase().includes(searchQuery.toLowerCase())
+          ));
 
-    const statusMatch = !status || item.offerStatus?.includes(status);
+      const statusMatch = !status || item.offerStatus?.includes(status);
 
-    const departmentMatch =
-      !department ||
-      item.department?.toLowerCase().includes(department.toLowerCase());
+      const departmentMatch =
+        !department ||
+        item.department?.toLowerCase().includes(department.toLowerCase());
 
-    return searchMatch && statusMatch && departmentMatch;
-  });
+      return searchMatch && statusMatch && departmentMatch;
+    })
+    .sort((a, b) => b.id - a.id);
 
   const handlePageChange = (page) => {
     if (page > 0 && page <= Math.ceil(filterOffer.length / itemsPerPage)) {

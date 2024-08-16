@@ -6,10 +6,10 @@ import ApiUser from "~/services/usersApi";
 import Select from "react-select";
 import "../../assets/css/job-css/JobForm.css";
 import {
-  optionsGender,
   optionsUserRole,
   optionsDepartment,
   optionsUserStatus,
+  optionsGender,
 } from "~/data/Constants";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
@@ -19,6 +19,7 @@ import "../../assets/css/user-css/updateUser.module.css";
 import { getMessage } from "~/data/Messages";
 
 const UpdateUser = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -27,7 +28,12 @@ const UpdateUser = () => {
   const fetchUser = async (id) => {
     const res = await ApiUser.getDetailUser(id);
     if (res) {
-      setUser({ ...res, dob: convertDobArrayToISO(res.dob) });
+      setUser({
+        ...res,
+        dob: convertDobArrayToISO(res.dob),
+        gender: optionsGender.find((g) => g.value === res.gender) || null,
+        userRole: optionsUserRole.find((r) => r.value === res.userRole) || null,
+      });
     }
   };
 
@@ -46,12 +52,13 @@ const UpdateUser = () => {
       dob: user?.dob || "",
       address: user?.address || "",
       phone: user?.phone || "",
-      gender: user?.gender || "",
-      userRole: user?.userRole || "",
+      gender: user?.gender || null,
+      userRole: user?.userRole || null,
       department: user?.department || "",
       userStatus: user?.userStatus || "",
       note: user?.note || "",
     },
+
     validationSchema: Yup.object({
       fullName: Yup.string()
         .matches(
@@ -65,15 +72,32 @@ const UpdateUser = () => {
         .required(getMessage("ME002")),
       dob: Yup.date()
         .max(new Date(), getMessage("ME010"))
-        .required(getMessage("ME002")),
+        .required(getMessage("ME002"))
+        .test("dob", "You must be at least 18 years old", function (value) {
+          const today = new Date();
+          const birthDate = new Date(value);
+          const age = today.getFullYear() - birthDate.getFullYear();
+          const month = today.getMonth() - birthDate.getMonth();
+          if (
+            month < 0 ||
+            (month === 0 && today.getDate() < birthDate.getDate())
+          ) {
+            return age > 18;
+          }
+          return age >= 18;
+        }),
       phone: Yup.string()
         .matches(/^[0-9]+$/, getMessage("ME029"))
         .length(10, getMessage("ME029")),
-      gender: Yup.string().required(getMessage("ME002")),
-      userRole: Yup.string().required(getMessage("ME002")),
+      gender: Yup.object().nullable().required(getMessage("ME002")),
+      userRole: Yup.object().nullable().required(getMessage("ME002")),
       department: Yup.string().required(getMessage("ME002")),
     }),
+
     onSubmit: async (values) => {
+      if (isSubmitting) return; // Ngăn chặn multiple submissions
+
+      setIsSubmitting(true);
       const userData = {
         id: values.id,
         address: values.address,
@@ -81,17 +105,14 @@ const UpdateUser = () => {
         dob: values.dob,
         email: values.email,
         fullName: values.fullName,
-        gender: values.gender,
+        gender: values.gender?.value,
         note: values.note,
         phone: values.phone,
-        userRole: values.userRole,
+        userRole: values.userRole?.value,
         userStatus: values.userStatus,
       };
 
-      console.log(userData);
-
       const res = await ApiUser.editUser(userData);
-      console.log(res);
 
       if (res && res.success) {
         navigate("/user");
@@ -99,6 +120,7 @@ const UpdateUser = () => {
       } else {
         toast.error(getMessage("ME013"));
       }
+      setIsSubmitting(false);
     },
   });
 
@@ -213,11 +235,9 @@ const UpdateUser = () => {
                         <Select
                           name="gender"
                           options={optionsGender}
-                          value={optionsGender?.find(
-                            (s) => (s.value = formik.values?.gender)
-                          )}
+                          value={formik.values.gender}
                           onChange={(option) =>
-                            formik.setFieldValue("gender", option.value)
+                            formik.setFieldValue("gender", option)
                           }
                         />
                       </Col>
@@ -239,18 +259,18 @@ const UpdateUser = () => {
                       </Form.Label>
                       <Col sm={7}>
                         <Select
-                          name="role"
+                          name="userRole"
                           options={optionsUserRole}
-                          value={optionsUserRole?.find(
-                            (u) => u.value === formik.values?.userRole
-                          )}
+                          value={formik.values.userRole}
                           onChange={(option) =>
-                            formik.setFieldValue("role", option.value)
+                            formik.setFieldValue("userRole", option)
                           }
                         />
                       </Col>
-                      {formik.touched.role && formik.errors.role && (
-                        <div className="text-danger">{formik.errors.role}</div>
+                      {formik.touched.userRole && formik.errors.userRole && (
+                        <div className="text-danger">
+                          {formik.errors.userRole}
+                        </div>
                       )}
                     </Form.Group>
                   </Col>
@@ -327,6 +347,7 @@ const UpdateUser = () => {
                 <button
                   type="submit"
                   className="button-form button-form--primary"
+                  disabled={formik.isSubmitting || isSubmitting}
                 >
                   Update
                 </button>

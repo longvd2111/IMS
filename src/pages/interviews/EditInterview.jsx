@@ -138,7 +138,8 @@ const EditInterview = () => {
     if (res && res.data) {
       const clonedListInterviewers = _.filter(
         res.data,
-        (o) => o.userRole === ROLE_INTERVIEWER.value
+        (o) =>
+          o.userRole === ROLE_INTERVIEWER.value && o.userStatus === "ACTIVE"
       );
       setOptionInterviews(
         clonedListInterviewers.map((i) => ({
@@ -157,7 +158,7 @@ const EditInterview = () => {
     if (res && res.data) {
       const clonedListRecruiters = _.filter(
         res.data,
-        (o) => o.userRole === ROLE_RECRUITER.value
+        (o) => o.userRole === ROLE_RECRUITER.value && o.userStatus === "ACTIVE"
       );
       setOptionRecruiters(
         clonedListRecruiters.map((r) => ({
@@ -171,8 +172,10 @@ const EditInterview = () => {
   const getJob = async (index, pageSize) => {
     let res = await fetchAllJobs(index, pageSize);
     if (res && res.data) {
+      const openJobs = res?.data.filter((job) => job.jobStatus === "OPEN");
+
       setOptionJobs(
-        res.data.map((job) => ({
+        openJobs?.map((job) => ({
           value: job.id,
           label: job.jobTitle,
         }))
@@ -434,7 +437,7 @@ const EditInterview = () => {
                     </Form.Label>
                     <Col sm={9}>
                       <Select
-                        value={optionJobs.find(
+                        value={optionJobs?.find(
                           (job) => job.value === formik.values?.jobId
                         )}
                         onChange={(selectedOption) =>
@@ -463,7 +466,7 @@ const EditInterview = () => {
                     </Form.Label>
                     <Col sm={9}>
                       <Select
-                        value={optionCandidates.find(
+                        value={optionCandidates?.find(
                           (c) => c.value === formik.values?.candidateId
                         )}
                         onChange={(selectedOption) => {

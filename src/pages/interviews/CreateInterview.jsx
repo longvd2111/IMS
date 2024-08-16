@@ -67,7 +67,8 @@ const CreateInterview = () => {
     if (res && res.data) {
       const clonedListInterviewers = _.filter(
         res.data,
-        (o) => o.userRole === ROLE_INTERVIEWER.value
+        (o) =>
+          o.userRole === ROLE_INTERVIEWER.value && o.userStatus === "ACTIVE"
       );
       setOptionInterviews(
         clonedListInterviewers.map((i) => ({
@@ -86,7 +87,7 @@ const CreateInterview = () => {
     if (res && res.data) {
       const clonedListRecruiters = _.filter(
         res.data,
-        (o) => o.userRole === ROLE_RECRUITER.value
+        (o) => o.userRole === ROLE_RECRUITER.value && o.userStatus === "ACTIVE"
       );
       setOptionRecruiters(
         clonedListRecruiters.map((r) => ({
@@ -100,7 +101,7 @@ const CreateInterview = () => {
   const getJob = async (index, pageSize) => {
     let res = await fetchAllJobs(index, pageSize);
     if (res && res.data) {
-      const openJobs = res.data.filter((job) => job.jobStatus === "OPEN");
+      const openJobs = res.data.filter((job) => job.jobStatus === "OPEN") || {};
       setOptionJobs(
         openJobs.map((job) => ({
           value: job.id,

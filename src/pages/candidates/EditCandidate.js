@@ -20,15 +20,30 @@ import { toast } from "react-toastify";
 import { getMessage } from "~/data/Messages";
 
 const validationSchema = Yup.object().shape({
-  fullName: Yup.string().required(getMessage("ME002")),
+  fullName: Yup.string()
+    .matches(
+      /^[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*(\s[A-ZÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-záàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ]*)+$/,
+      getMessage("ME041")
+    )
+    .required(getMessage("ME002")),
   email: Yup.string()
     .email(getMessage("ME009"))
-    .matches(/^[a-zA-Z0-9._%+-]+@gmail\.com$/, getMessage("ME028"))
+    .matches(
+      /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
+      "Email must be in the format name@gmail.com"
+    )
     .required(getMessage("ME002")),
-  phone: Yup.string().test("is-valid-phone", getMessage("ME029"), isValidPhone),
-  dob: Yup.string().test("is-valid-dob", getMessage("ME010"), isValidDOB),
+  dob: Yup.date()
+    .nullable()
+    .max(new Date(), getMessage("ME010"))
+    .test("is-over-18", "Must be at least 18 years old", function (value) {
+      return value && new Date().getFullYear() - value.getFullYear() >= 18;
+    })
+    .required(getMessage("ME002")),
+  phone: Yup.string()
+    .matches(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
+    .required(getMessage("ME002")),
   gender: Yup.object().nullable().required(getMessage("ME002")),
-  yearExperience: Yup.number().min(0, getMessage("ME030")),
   candidatePosition: Yup.object().nullable().required(getMessage("ME002")),
   highestLevel: Yup.object().nullable().required(getMessage("ME002")),
   skillIds: Yup.array()
@@ -36,6 +51,16 @@ const validationSchema = Yup.object().shape({
     .required(getMessage("ME002")),
   recruiterId: Yup.object().nullable().required(getMessage("ME002")),
   candidateStatus: Yup.object().nullable().required(getMessage("ME002")),
+  yearExperience: Yup.number()
+    .positive("Years of experience must be a positive number")
+    .test("valid-experience", "Invalid years of experience", function (value) {
+      const dob = this.parent.dob;
+      if (dob && value) {
+        const age = new Date().getFullYear() - dob.getFullYear();
+        return value <= age - 18;
+      }
+      return true;
+    }),
 });
 
 export default function EditCandidate() {

@@ -34,16 +34,18 @@ export default function User() {
     loadDataUser();
   }, []);
 
-  const filterUsers = usersList.filter((user) => {
-    const searchMatch =
-      !searchQuery ||
-      user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filterUsers = usersList
+    .filter((user) => {
+      const searchMatch =
+        !searchQuery ||
+        user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const roleMatch = !role || user.userRole === role;
+      const roleMatch = !role || user.userRole === role;
 
-    return searchMatch && roleMatch;
-  });
+      return searchMatch && roleMatch;
+    })
+    .sort((a, b) => b.id - a.id);
 
   const handlePageChange = (page) => {
     if (page > 0 && page <= Math.ceil(filterUsers.length / itemsPerPage)) {

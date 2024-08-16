@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Col, Container, Row, Form } from "react-bootstrap";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -16,6 +16,8 @@ import { toast } from "react-toastify";
 import { getMessage } from "~/data/Messages";
 
 const CreateUser = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -44,22 +46,37 @@ const CreateUser = () => {
         .required(getMessage("ME002")),
       dob: Yup.date()
         .max(new Date(), getMessage("ME010"))
-        .required(getMessage("ME002")),
+        .required(getMessage("ME002"))
+        .test("dob", "You must be at least 18 years old", function (value) {
+          const today = new Date();
+          const birthDate = new Date(value);
+          const age = today.getFullYear() - birthDate.getFullYear();
+          const month = today.getMonth() - birthDate.getMonth();
+          if (
+            month < 0 ||
+            (month === 0 && today.getDate() < birthDate.getDate())
+          ) {
+            return age > 18;
+          }
+          return age >= 18;
+        }),
       phone: Yup.string()
         .matches(/^[0-9]+$/, getMessage("ME029"))
         .length(10, getMessage("ME029")),
-      gender: Yup.string().required(getMessage("ME002")),
+      gender: Yup.object().required(getMessage("ME002")),
       userRole: Yup.string().required(getMessage("ME002")),
       department: Yup.string().required(getMessage("ME002")),
     }),
     onSubmit: async (values) => {
+      if (isSubmitting) return; // Ngăn chặn multiple submissions
+      setIsSubmitting(true);
       const userData = {
         address: values.address,
         department: values.department,
         dob: values.dob,
         email: values.email.trim(),
         fullName: values.fullName.trim(),
-        gender: values.gender,
+        gender: values.gender.value,
         note: values.note.trim(),
         phone: values.phone,
         userRole: values.userRole,
@@ -74,6 +91,7 @@ const CreateUser = () => {
       } else {
         toast.error(getMessage("ME026"));
       }
+      setIsSubmitting(false);
     },
   });
 
@@ -197,11 +215,10 @@ const CreateUser = () => {
                       <Select
                         value={optionsGender.find(
                           (option) => option.value === formik.values.gender
-                        )} // Cung cấp đối tượng phù hợp cho Select
-                        onChange={
-                          (selectedOption) =>
-                            formik.setFieldValue("gender", selectedOption.value) // Lưu giá trị vào Formik
-                        }
+                        )}
+                        onChange={(selectedOption) => {
+                          formik.setFieldValue("gender", selectedOption);
+                        }}
                         options={optionsGender}
                         className="basic-multi-select"
                         classNamePrefix="select"
@@ -337,6 +354,7 @@ const CreateUser = () => {
               <button
                 type="submit"
                 className="button-form button-form--primary"
+                disabled={formik.isSubmitting || isSubmitting}
               >
                 Submit
               </button>
