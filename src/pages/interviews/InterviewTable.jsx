@@ -61,14 +61,16 @@ const InterviewTable = ({ dataInterviews, role }) => {
                   style={{ cursor: "pointer" }}
                 />
                 {role === "ROLE_INTERVIEWER" ? (
-                  <FaRegHandPointUp
-                    data-testid="submit-icon"
-                    className="action__icon"
-                    onClick={() =>
-                      navigate(`/interview/submit/${interview.id}`)
-                    }
-                    style={{ cursor: "pointer" }}
-                  />
+                  interview.interviewStatus == "OPEN" && (
+                    <FaRegHandPointUp
+                      data-testid="submit-icon"
+                      className="action__icon"
+                      onClick={() =>
+                        navigate(`/interview/submit/${interview.id}`)
+                      }
+                      style={{ cursor: "pointer" }}
+                    />
+                  )
                 ) : (
                   <BiEdit
                     data-testid="edit-icon"
